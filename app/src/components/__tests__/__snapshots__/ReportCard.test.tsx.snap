@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ReportCard renders Resolved status 1`] = `null`;
+
+exports[`ReportCard renders with thumbnail image 1`] = `null`;
+
+exports[`ReportCard renders without image 1`] = `null`;

@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Image,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -12,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {AppLogo} from '../../../components/AppLogo';
 import {ErrorMessage} from '../../../components/auth/ErrorMessage';
 import {LoadingButton} from '../../../components/auth/LoadingButton';
 import {SuccessToast} from '../../../components/SuccessToast';
@@ -75,11 +75,7 @@ export function LoginScreen({onNavigateToRegister, successMessage, onDismissSucc
 
           {/* Header */}
           <View style={styles.header}>
-            <Image
-              source={require('../../../assets/icon-white-logo.png')}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
+            <AppLogo size={68} />
             <Text style={styles.appName}>StreetSignal</Text>
             <Text style={styles.tagline}>Plataforma de Reportes Ciudadanos</Text>
           </View>
@@ -214,11 +210,6 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 28,
-  },
-  logoImage: {
-    width: 120,
-    height: 120,
-    marginBottom: 14,
   },
   appName: {
     fontSize: 30,

@@ -5,6 +5,10 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {RootNavigator} from './src/navigation';
 import {RootParamList} from './src/navigation/types';
 import {LoginScreen, RegisterScreen} from './src/features/auth';
+import {ComponentsDemo} from './src/components/__demo__/ComponentsDemo';
+
+// Set to true to preview the design-system component library
+const SHOW_COMPONENTS_DEMO = false;
 
 type Screen = 'login' | 'register';
 
@@ -26,9 +30,14 @@ const linking: LinkingOptions<RootParamList> = {
 };
 
 export default function App() {
+  // Hooks must always be called unconditionally
   const [isAuthenticated, _setIsAuthenticated] = useState(false);
   const [screen, setScreen] = useState<Screen>('login');
   const [loginToast, setLoginToast] = useState<string | null>(null);
+
+  if (SHOW_COMPONENTS_DEMO) {
+    return <ComponentsDemo />;
+  }
 
   const renderAuthFlow = () => {
     if (screen === 'register') {
