@@ -1,3 +1,2 @@
-// AsyncStorage helpers — token, user, drafts, cached reports
-// @react-native-async-storage/async-storage will be installed in feature/auth
-export {};
+export {storageService, STORAGE_KEYS} from './storageService';
+export type {StaffFilter, ReportDraft, StoredSession} from './storageService';
