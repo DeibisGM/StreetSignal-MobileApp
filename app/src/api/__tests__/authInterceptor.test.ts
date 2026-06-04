@@ -37,7 +37,7 @@ describe('AuthInterceptor', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [, options] = mockFetch.mock.calls[0];
     const headers = options.headers as Record<string, string>;
-    expect(headers['Authorization']).toBe(`Bearer ${token}`);
+    expect(headers.Authorization).toBe(`Bearer ${token}`);
   });
 
   it('omits Authorization header when no session is active', async () => {
@@ -50,7 +50,7 @@ describe('AuthInterceptor', () => {
 
     const [, options] = mockFetch.mock.calls[0];
     const headers = options.headers as Record<string, string>;
-    expect(headers['Authorization']).toBeUndefined();
+    expect(headers.Authorization).toBeUndefined();
   });
 
   it('clears the session and calls the unauthorized handler on 401', async () => {
