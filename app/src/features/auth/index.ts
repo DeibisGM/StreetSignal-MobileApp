@@ -1,2 +1,2 @@
 // Login, register screens & hooks — feature/auth
-export {};
+export {LoginScreen} from './screens/LoginScreen';
