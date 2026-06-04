@@ -3,7 +3,7 @@
 declare const process: {env: Record<string, string | undefined>} | undefined;
 const ENV_URL =
   typeof process !== 'undefined'
-    ? process?.env['EXPO_PUBLIC_API_URL']
+    ? process?.env.EXPO_PUBLIC_API_URL
     : undefined;
 
 export const BASE_URL = ENV_URL ?? 'http://10.0.2.2:5000/api';

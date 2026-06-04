@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`UpdateTimelineItem renders comment update 1`] = `null`;
+
+exports[`UpdateTimelineItem renders last item (no connector line) 1`] = `null`;
+
+exports[`UpdateTimelineItem renders status-change update 1`] = `null`;

@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CommentItem renders citizen comment 1`] = `null`;
+
+exports[`CommentItem renders official comment 1`] = `null`;

@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`StatusBadge renders Assigned status correctly 1`] = `null`;
+
+exports[`StatusBadge renders InProgress status correctly 1`] = `null`;
+
+exports[`StatusBadge renders InReview status correctly 1`] = `null`;
+
+exports[`StatusBadge renders Pending status correctly 1`] = `null`;
+
+exports[`StatusBadge renders Rejected status correctly 1`] = `null`;
+
+exports[`StatusBadge renders Resolved status correctly 1`] = `null`;

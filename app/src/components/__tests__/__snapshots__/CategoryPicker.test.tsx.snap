@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CategoryPicker renders all categories unselected 1`] = `null`;
+
+exports[`CategoryPicker renders with one category selected 1`] = `null`;

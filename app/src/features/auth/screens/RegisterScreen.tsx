@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -58,6 +59,7 @@ export function RegisterScreen({onNavigateToLogin}: Props) {
   }, [success, onNavigateToLogin]);
 
   const strength = STRENGTH_CONFIG[passwordStrength];
+  const strengthLabelStyle = {color: strength.color};
   const passwordsMatch =
     confirmPassword.length > 0 && confirmPassword === password;
 
@@ -74,9 +76,11 @@ export function RegisterScreen({onNavigateToLogin}: Props) {
 
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.logoWrapper}>
-              <Text style={styles.logoInitial}>S</Text>
-            </View>
+            <Image
+              source={require('../../../assets/icon-white-logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
             <Text style={styles.appName}>StreetSignal</Text>
             <Text style={styles.tagline}>Plataforma de Reportes Ciudadanos</Text>
           </View>
@@ -182,24 +186,21 @@ export function RegisterScreen({onNavigateToLogin}: Props) {
               {password.length > 0 ? (
                 <View style={styles.strengthContainer}>
                   <View style={styles.strengthBars}>
-                    {[1, 2, 3].map(level => (
-                      <View
-                        key={level}
-                        style={[
-                          styles.strengthBar,
-                          {
-                            backgroundColor:
-                              strength.bars >= level
-                                ? strength.color
-                                : '#DDE8F2',
-                          },
-                        ]}
-                      />
-                    ))}
+                    {[1, 2, 3].map(level => {
+                      const barStyle = {
+                        backgroundColor:
+                          strength.bars >= level ? strength.color : '#DDE8F2',
+                      };
+                      return (
+                        <View
+                          key={level}
+                          style={[styles.strengthBar, barStyle]}
+                        />
+                      );
+                    })}
                   </View>
                   {strength.label ? (
-                    <Text
-                      style={[styles.strengthLabel, {color: strength.color}]}>
+                    <Text style={[styles.strengthLabel, strengthLabelStyle]}>
                       {strength.label}
                     </Text>
                   ) : null}
@@ -307,25 +308,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 28,
   },
-  logoWrapper: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    backgroundColor: '#2196F3',
-    alignItems: 'center',
-    justifyContent: 'center',
+  logoImage: {
+    width: 120,
+    height: 120,
     marginBottom: 14,
-    shadowColor: '#2196F3',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  logoInitial: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -1,
   },
   appName: {
     fontSize: 30,
@@ -505,5 +491,4 @@ const styles = StyleSheet.create({
     color: '#5A7A99',
     marginTop: 24,
   },
-
 });

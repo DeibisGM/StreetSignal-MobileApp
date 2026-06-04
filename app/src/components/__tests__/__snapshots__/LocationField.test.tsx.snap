@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LocationField renders disabled 1`] = `null`;
+
+exports[`LocationField renders empty placeholder 1`] = `null`;
+
+exports[`LocationField renders with address value 1`] = `null`;

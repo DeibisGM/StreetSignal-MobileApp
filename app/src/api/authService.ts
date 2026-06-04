@@ -1,4 +1,5 @@
 import {AuthResponse, User} from '../types';
+import {storageService} from '../storage';
 import {apiClient} from './client';
 import {ENDPOINTS} from './endpoints';
 import {sessionManager} from './sessionManager';
@@ -11,6 +12,7 @@ export const authService = {
       data,
     );
     sessionManager.setSession(response.token, response.user);
+    storageService.saveSession(response.token, response.user).catch(() => {});
     return response;
   },
 
@@ -20,6 +22,7 @@ export const authService = {
       data,
     );
     sessionManager.setSession(response.token, response.user);
+    storageService.saveSession(response.token, response.user).catch(() => {});
     return response;
   },
 
@@ -27,6 +30,7 @@ export const authService = {
 
   logout: (): void => {
     sessionManager.clearSession();
+    storageService.clearSession().catch(() => {});
     // Best-effort server-side invalidation — not awaited because JWT is stateless.
     apiClient.post<void>(ENDPOINTS.auth.logout, {}).catch(() => {});
   },
