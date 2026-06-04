@@ -46,12 +46,10 @@ function buildHeaders(
     headers['Content-Type'] = 'application/json';
   }
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers.Authorization = `Bearer ${token}`;
   }
   return headers;
 }
-
-const REQUEST_TIMEOUT_MS = 10_000;
 
 async function request<T>(
   endpoint: string,
@@ -76,24 +74,7 @@ async function request<T>(
         console.log(`[API] ${String(options.method)} ${url}`);
       }
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
-  let response: Response;
-  try {
-    response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-      signal: controller.signal,
-    });
-  } catch (err) {
-    if (err instanceof Error && err.name === 'AbortError') {
-      throw new TypeError('Network request failed');
-    }
-    throw err;
-  } finally {
-    clearTimeout(timer);
-  }
+      const response = await fetchWithTimeout(url, requestOptions, timeoutMs);
 
       if (!response.ok) {
         const apiError = await toApiError(response);
