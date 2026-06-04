@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {AppLogo} from '../../../components/AppLogo';
 import {ErrorMessage} from '../../../components/auth/ErrorMessage';
 import {LoadingButton} from '../../../components/auth/LoadingButton';
 import {SuccessToast} from '../../../components/SuccessToast';
@@ -74,9 +75,7 @@ export function LoginScreen({onNavigateToRegister, successMessage, onDismissSucc
 
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.logoWrapper}>
-              <Text style={styles.logoInitial}>S</Text>
-            </View>
+            <AppLogo size={68} />
             <Text style={styles.appName}>StreetSignal</Text>
             <Text style={styles.tagline}>Plataforma de Reportes Ciudadanos</Text>
           </View>
@@ -211,26 +210,6 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 28,
-  },
-  logoWrapper: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    backgroundColor: '#2196F3',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-    shadowColor: '#2196F3',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  logoInitial: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -1,
   },
   appName: {
     fontSize: 30,
