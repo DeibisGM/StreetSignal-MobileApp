@@ -1,10 +1,8 @@
 import React from 'react';
 import {Image, StyleSheet, View} from 'react-native';
-import {Colors, BorderRadius} from '../../theme';
+import {Colors} from '../../theme';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO_WHITE = require('../../assets/images/logo-white.png');
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO_DARK = require('../../assets/images/logo-dark.png');
 
 interface AppLogoProps {

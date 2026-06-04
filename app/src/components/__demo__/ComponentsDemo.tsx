@@ -1,12 +1,6 @@
 import React, {useState} from 'react';
 import {SafeAreaView, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {
-  Mailbox,
-  MagnifyingGlass,
-  WarningCircle,
-  MapPin,
-  Camera,
-} from 'phosphor-react-native';
+import {Mailbox, MagnifyingGlass} from 'phosphor-react-native';
 import {Colors, Spacing} from '../../theme';
 import {AppLogo} from '../AppLogo';
 import {AppTextInput} from '../AppTextInput';
@@ -118,9 +112,9 @@ export function ComponentsDemo() {
         {/* LoadingButton */}
         <Section title="LoadingButton">
           <LoadingButton label="Enviar reporte" onPress={() => { setLoading(true); setTimeout(() => setLoading(false), 2000); }} loading={loading} />
-          <View style={{height: 12}} />
+          <View style={styles.spacer} />
           <LoadingButton label="Cancelar" onPress={() => {}} variant="ghost" />
-          <View style={{height: 12}} />
+          <View style={styles.spacer} />
           <LoadingButton label="Deshabilitado" onPress={() => {}} disabled />
         </Section>
 
@@ -216,4 +210,5 @@ const styles = StyleSheet.create({
   wrap: {flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.stackSm},
   footer: {marginTop: Spacing.stackXl, alignItems: 'center', paddingBottom: Spacing.stackLg},
   footerText: {fontSize: 12, color: Colors.outline},
+  spacer: {height: 12},
 });

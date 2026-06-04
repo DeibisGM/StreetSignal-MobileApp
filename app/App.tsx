@@ -30,13 +30,14 @@ const linking: LinkingOptions<RootParamList> = {
 };
 
 export default function App() {
-  if (SHOW_COMPONENTS_DEMO) {
-    return <ComponentsDemo />;
-  }
-
+  // Hooks must always be called unconditionally
   const [isAuthenticated, _setIsAuthenticated] = useState(false);
   const [screen, setScreen] = useState<Screen>('login');
   const [loginToast, setLoginToast] = useState<string | null>(null);
+
+  if (SHOW_COMPONENTS_DEMO) {
+    return <ComponentsDemo />;
+  }
 
   const renderAuthFlow = () => {
     if (screen === 'register') {
