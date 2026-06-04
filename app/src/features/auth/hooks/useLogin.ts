@@ -29,7 +29,7 @@ const INITIAL: State = {
 };
 
 function getErrorMessage(err: unknown): string {
-  if (err instanceof TypeError) {
+  if (err instanceof TypeError && err.message.includes('Network request failed')) {
     return 'Sin conexión a internet. Verifica tu red e intenta de nuevo.';
   }
   if (err instanceof Error) {

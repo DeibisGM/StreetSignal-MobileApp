@@ -4,10 +4,10 @@ import type {User} from '../../types';
 
 export const storageService = {
   saveSession: async (token: string, user: User): Promise<void> => {
-    await AsyncStorage.multiSet([
-      [STORAGE_KEYS.AUTH_TOKEN, token],
-      [STORAGE_KEYS.CURRENT_USER, JSON.stringify(user)],
-    ]);
+    await AsyncStorage.setMany({
+      [STORAGE_KEYS.AUTH_TOKEN]: token,
+      [STORAGE_KEYS.CURRENT_USER]: JSON.stringify(user),
+    });
   },
 
   getToken: (): Promise<string | null> =>
@@ -19,7 +19,7 @@ export const storageService = {
   },
 
   clearSession: async (): Promise<void> => {
-    await AsyncStorage.multiRemove([
+    await AsyncStorage.removeMany([
       STORAGE_KEYS.AUTH_TOKEN,
       STORAGE_KEYS.CURRENT_USER,
     ]);

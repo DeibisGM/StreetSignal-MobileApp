@@ -43,9 +43,24 @@ export interface LoginPayload {
   password: string;
 }
 
+export interface RegisterPayload {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
 export const authService = {
   login: async (payload: LoginPayload): Promise<AuthResponse> => {
     const raw = await apiClient.post<RawAuthResponse>('/auth/login', payload);
+    return {
+      token: raw.token,
+      user: mapUser(raw.user),
+    };
+  },
+
+  register: async (payload: RegisterPayload): Promise<AuthResponse> => {
+    const raw = await apiClient.post<RawAuthResponse>('/auth/register', payload);
     return {
       token: raw.token,
       user: mapUser(raw.user),
