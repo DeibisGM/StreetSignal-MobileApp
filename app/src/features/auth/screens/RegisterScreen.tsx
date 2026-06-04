@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -13,57 +13,57 @@ import {
 } from 'react-native';
 import {ErrorMessage} from '../../../components/auth/ErrorMessage';
 import {LoadingButton} from '../../../components/auth/LoadingButton';
-import {SuccessToast} from '../../../components/SuccessToast';
-import {useLogin} from '../hooks/useLogin';
+import {useRegister, type PasswordStrength} from '../hooks/useRegister';
 
 interface Props {
-  onNavigateToRegister?: () => void;
-  successMessage?: string | null;
-  onDismissSuccess?: () => void;
+  onNavigateToLogin?: (message?: string) => void;
 }
 
-export function LoginScreen({onNavigateToRegister, successMessage, onDismissSuccess}: Props) {
+const STRENGTH_CONFIG: Record<
+  PasswordStrength,
+  {label: string; color: string; bars: number}
+> = {
+  none: {label: '', color: '#DDE8F2', bars: 0},
+  weak: {label: 'Debil', color: '#F44336', bars: 1},
+  medium: {label: 'Media', color: '#FF9800', bars: 2},
+  strong: {label: 'Fuerte', color: '#4CAF50', bars: 3},
+};
+
+export function RegisterScreen({onNavigateToLogin}: Props) {
   const {
+    fullName,
     email,
     password,
+    confirmPassword,
     showPassword,
+    showConfirmPassword,
     loading,
     error,
     success,
     fieldErrors,
+    passwordStrength,
+    setFullName,
     setEmail,
     setPassword,
+    setConfirmPassword,
     toggleShowPassword,
+    toggleShowConfirmPassword,
     submit,
-  } = useLogin();
+  } = useRegister();
 
-  if (success) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <StatusBar barStyle="light-content" backgroundColor="#1A3C5E" />
-        <View style={styles.successContainer}>
-          <View style={styles.successIconWrapper}>
-            <Text style={styles.successIconText}>&#10003;</Text>
-          </View>
-          <Text style={styles.successTitle}>Bienvenido</Text>
-          <Text style={styles.successBody}>
-            Has iniciado sesion correctamente.
-          </Text>
-          <View style={styles.successBadge}>
-            <Text style={styles.successBadgeText}>Sesion activa</Text>
-          </View>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  useEffect(() => {
+    if (success) {
+      onNavigateToLogin?.('Cuenta creada correctamente. Ya puedes iniciar sesion.');
+    }
+  }, [success, onNavigateToLogin]);
+
+  const strength = STRENGTH_CONFIG[passwordStrength];
+  const passwordsMatch =
+    confirmPassword.length > 0 && confirmPassword === password;
 
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor="#1A3C5E" />
-      <SuccessToast
-        message={successMessage ?? null}
-        onDismiss={onDismissSuccess ?? (() => {})}
-      />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}>
@@ -83,19 +83,44 @@ export function LoginScreen({onNavigateToRegister, successMessage, onDismissSucc
 
           {/* Form card */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Iniciar sesion</Text>
+            <Text style={styles.cardTitle}>Crear cuenta</Text>
             <Text style={styles.cardSubtitle}>
-              Ingresa tus credenciales para continuar
+              Completa los datos para registrarte
             </Text>
 
-            {/* Global error */}
             {error ? (
               <View style={styles.errorWrapper}>
                 <ErrorMessage message={error} />
               </View>
             ) : null}
 
-            {/* Email field */}
+            {/* Full name */}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Nombre completo</Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  fieldErrors.fullName ? styles.inputWrapperError : null,
+                ]}>
+                <Text style={styles.inputPrefix}>A</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Tu nombre completo"
+                  placeholderTextColor="#A0B8D0"
+                  value={fullName}
+                  onChangeText={setFullName}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  editable={!loading}
+                  testID="fullname-input"
+                />
+              </View>
+              {fieldErrors.fullName ? (
+                <Text style={styles.fieldError}>{fieldErrors.fullName}</Text>
+              ) : null}
+            </View>
+
+            {/* Email */}
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Correo electronico</Text>
               <View
@@ -123,7 +148,7 @@ export function LoginScreen({onNavigateToRegister, successMessage, onDismissSucc
               ) : null}
             </View>
 
-            {/* Password field */}
+            {/* Password */}
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Contrasena</Text>
               <View
@@ -140,7 +165,6 @@ export function LoginScreen({onNavigateToRegister, successMessage, onDismissSucc
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
-                  autoComplete="password"
                   autoCorrect={false}
                   editable={!loading}
                   testID="password-input"
@@ -155,14 +179,85 @@ export function LoginScreen({onNavigateToRegister, successMessage, onDismissSucc
                   </Text>
                 </TouchableOpacity>
               </View>
+              {password.length > 0 ? (
+                <View style={styles.strengthContainer}>
+                  <View style={styles.strengthBars}>
+                    {[1, 2, 3].map(level => (
+                      <View
+                        key={level}
+                        style={[
+                          styles.strengthBar,
+                          {
+                            backgroundColor:
+                              strength.bars >= level
+                                ? strength.color
+                                : '#DDE8F2',
+                          },
+                        ]}
+                      />
+                    ))}
+                  </View>
+                  {strength.label ? (
+                    <Text
+                      style={[styles.strengthLabel, {color: strength.color}]}>
+                      {strength.label}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
               {fieldErrors.password ? (
                 <Text style={styles.fieldError}>{fieldErrors.password}</Text>
               ) : null}
             </View>
 
+            {/* Confirm password */}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>Confirmar contrasena</Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  fieldErrors.confirmPassword
+                    ? styles.inputWrapperError
+                    : null,
+                  passwordsMatch && !fieldErrors.confirmPassword
+                    ? styles.inputWrapperSuccess
+                    : null,
+                ]}>
+                <Text style={styles.inputPrefix}>*</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Repite tu contrasena"
+                  placeholderTextColor="#A0B8D0"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!loading}
+                  testID="confirm-password-input"
+                />
+                <TouchableOpacity
+                  onPress={toggleShowConfirmPassword}
+                  style={styles.eyeButton}
+                  hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                  testID="toggle-confirm-password">
+                  <Text style={styles.eyeText}>
+                    {showConfirmPassword ? 'Ocultar' : 'Ver'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {fieldErrors.confirmPassword ? (
+                <Text style={styles.fieldError}>
+                  {fieldErrors.confirmPassword}
+                </Text>
+              ) : passwordsMatch ? (
+                <Text style={styles.matchText}>Las contrasenas coinciden</Text>
+              ) : null}
+            </View>
+
             {/* Submit */}
             <LoadingButton
-              label="Iniciar sesion"
+              label="Crear cuenta"
               onPress={submit}
               loading={loading}
               testID="submit-button"
@@ -176,11 +271,11 @@ export function LoginScreen({onNavigateToRegister, successMessage, onDismissSucc
               <View style={styles.dividerLine} />
             </View>
 
-            {/* Register link */}
-            <View style={styles.registerRow}>
-              <Text style={styles.registerText}>No tienes cuenta? </Text>
-              <TouchableOpacity onPress={onNavigateToRegister} testID="go-to-register">
-                <Text style={styles.registerLink}>Registrate</Text>
+            {/* Login link */}
+            <View style={styles.loginRow}>
+              <Text style={styles.loginText}>Ya tienes cuenta? </Text>
+              <TouchableOpacity onPress={() => onNavigateToLogin?.()} testID="go-to-login">
+                <Text style={styles.loginLink}>Inicia sesion</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -299,6 +394,10 @@ const styles = StyleSheet.create({
     borderColor: '#F44336',
     backgroundColor: '#FFF9F9',
   },
+  inputWrapperSuccess: {
+    borderColor: '#4CAF50',
+    backgroundColor: '#F5FFF6',
+  },
   inputPrefix: {
     fontSize: 16,
     color: '#7A9BB5',
@@ -327,6 +426,37 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginLeft: 2,
   },
+  matchText: {
+    fontSize: 12,
+    color: '#4CAF50',
+    marginTop: 5,
+    marginLeft: 2,
+    fontWeight: '500',
+  },
+
+  // Password strength
+  strengthContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 8,
+  },
+  strengthBars: {
+    flexDirection: 'row',
+    gap: 4,
+    flex: 1,
+  },
+  strengthBar: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+  },
+  strengthLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    minWidth: 44,
+    textAlign: 'right',
+  },
 
   // Submit
   submitButton: {
@@ -352,17 +482,17 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // Register
-  registerRow: {
+  // Login link
+  loginRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  registerText: {
+  loginText: {
     fontSize: 14,
     color: '#6B8BA4',
   },
-  registerLink: {
+  loginLink: {
     fontSize: 14,
     color: '#2196F3',
     fontWeight: '700',
@@ -376,58 +506,4 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
 
-  // Success
-  successContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  successIconWrapper: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#4CAF50',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-    shadowColor: '#4CAF50',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  successIconText: {
-    fontSize: 38,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    lineHeight: 48,
-  },
-  successTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 10,
-  },
-  successBody: {
-    fontSize: 16,
-    color: '#A8C4E0',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 28,
-  },
-  successBadge: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  successBadgeText: {
-    color: '#A8C4E0',
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
 });
