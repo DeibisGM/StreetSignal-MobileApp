@@ -9,9 +9,11 @@ import {
   UpdateReportStatusRequest,
 } from './types';
 
-function toQueryString(params: Record<string, unknown>): string {
+export function buildQueryString(
+  params: Record<string, string | number | undefined>,
+): string {
   const pairs = Object.entries(params).filter(
-    ([, v]) => v !== undefined && v !== null,
+    ([, v]) => v !== undefined && v !== '',
   );
   if (!pairs.length) {
     return '';
@@ -32,9 +34,7 @@ export const reportsService = {
     apiClient.get<PaginatedResponse<Report>>(ENDPOINTS.reports.mine),
 
   getReports: (filters?: StaffReportFilters): Promise<PaginatedResponse<Report>> => {
-    const qs = filters
-      ? toQueryString(filters as Record<string, unknown>)
-      : '';
+    const qs = filters ? buildQueryString(filters) : '';
     return apiClient.get<PaginatedResponse<Report>>(
       `${ENDPOINTS.reports.list}${qs}`,
     );

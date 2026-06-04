@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -20,9 +20,10 @@ interface Props {
   onNavigateToRegister?: () => void;
   successMessage?: string | null;
   onDismissSuccess?: () => void;
+  onSuccess?: () => void;
 }
 
-export function LoginScreen({onNavigateToRegister, successMessage, onDismissSuccess}: Props) {
+export function LoginScreen({onNavigateToRegister, successMessage, onDismissSuccess, onSuccess}: Props) {
   const {
     email,
     password,
@@ -36,6 +37,12 @@ export function LoginScreen({onNavigateToRegister, successMessage, onDismissSucc
     toggleShowPassword,
     submit,
   } = useLogin();
+
+  useEffect(() => {
+    if (success) {
+      onSuccess?.();
+    }
+  }, [onSuccess, success]);
 
   if (success) {
     return (

@@ -29,7 +29,17 @@ describe('AuthInterceptor', () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({items: [], page: 1, pageSize: 10, total: 0}),
+      json: async () => ({
+        data: [],
+        pagination: {
+          page: 1,
+          pageSize: 10,
+          totalItems: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      }),
     });
 
     await apiClient.get('/reports/my');
