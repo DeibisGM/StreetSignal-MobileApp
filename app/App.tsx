@@ -1,10 +1,11 @@
 import React from 'react';
 import {StatusBar} from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
+import {NavigationContainer, LinkingOptions} from '@react-navigation/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {RootNavigator} from './src/navigation';
+import {RootParamList} from './src/navigation/types';
 
-const linking = {
+const linking: LinkingOptions<RootParamList> = {
   prefixes: ['streetsignal://'],
   config: {
     screens: {
