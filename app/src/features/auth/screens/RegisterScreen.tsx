@@ -58,6 +58,7 @@ export function RegisterScreen({onNavigateToLogin}: Props) {
   }, [success, onNavigateToLogin]);
 
   const strength = STRENGTH_CONFIG[passwordStrength];
+  const strengthLabelStyle = {color: strength.color};
   const passwordsMatch =
     confirmPassword.length > 0 && confirmPassword === password;
 
@@ -182,24 +183,21 @@ export function RegisterScreen({onNavigateToLogin}: Props) {
               {password.length > 0 ? (
                 <View style={styles.strengthContainer}>
                   <View style={styles.strengthBars}>
-                    {[1, 2, 3].map(level => (
-                      <View
-                        key={level}
-                        style={[
-                          styles.strengthBar,
-                          {
-                            backgroundColor:
-                              strength.bars >= level
-                                ? strength.color
-                                : '#DDE8F2',
-                          },
-                        ]}
-                      />
-                    ))}
+                    {[1, 2, 3].map(level => {
+                      const barStyle = {
+                        backgroundColor:
+                          strength.bars >= level ? strength.color : '#DDE8F2',
+                      };
+                      return (
+                        <View
+                          key={level}
+                          style={[styles.strengthBar, barStyle]}
+                        />
+                      );
+                    })}
                   </View>
                   {strength.label ? (
-                    <Text
-                      style={[styles.strengthLabel, {color: strength.color}]}>
+                    <Text style={[styles.strengthLabel, strengthLabelStyle]}>
                       {strength.label}
                     </Text>
                   ) : null}

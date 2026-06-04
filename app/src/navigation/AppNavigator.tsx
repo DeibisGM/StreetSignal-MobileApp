@@ -64,6 +64,19 @@ const TAB_BAR_STYLE = {
   tabBarStyle: {backgroundColor: '#FFFFFF', borderTopColor: '#E5EBF1'},
 };
 
+function makeTabIcon(emoji: string) {
+  return ({color}: {color: string}) => {
+    const iconStyle = {color};
+    return <Text style={iconStyle}>{emoji}</Text>;
+  };
+}
+
+const staffTabIcon = makeTabIcon('📋');
+const homeTabIcon = makeTabIcon('🏠');
+const createReportTabIcon = makeTabIcon('➕');
+const notificationsTabIcon = makeTabIcon('🔔');
+const profileTabIcon = makeTabIcon('👤');
+
 export default function AppNavigator() {
   const {user} = useAuth();
   const isStaff = user?.role === 'staff';
@@ -74,46 +87,31 @@ export default function AppNavigator() {
         <Tab.Screen
           name="StaffTab"
           component={StaffStackNavigator}
-          options={{
-            title: 'Reportes',
-            tabBarIcon: ({color}) => <Text style={{color}}>📋</Text>,
-          }}
+          options={{title: 'Reportes', tabBarIcon: staffTabIcon}}
         />
       ) : (
         <>
           <Tab.Screen
             name="HomeTab"
             component={HomeStackNavigator}
-            options={{
-              title: 'Inicio',
-              tabBarIcon: ({color}) => <Text style={{color}}>🏠</Text>,
-            }}
+            options={{title: 'Inicio', tabBarIcon: homeTabIcon}}
           />
           <Tab.Screen
             name="CreateReport"
             component={CreateReportScreen}
-            options={{
-              title: 'Reportar',
-              tabBarIcon: ({color}) => <Text style={{color}}>➕</Text>,
-            }}
+            options={{title: 'Reportar', tabBarIcon: createReportTabIcon}}
           />
         </>
       )}
       <Tab.Screen
         name="Notifications"
         component={NotificationsScreen}
-        options={{
-          title: 'Notificaciones',
-          tabBarIcon: ({color}) => <Text style={{color}}>🔔</Text>,
-        }}
+        options={{title: 'Notificaciones', tabBarIcon: notificationsTabIcon}}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{
-          title: 'Perfil',
-          tabBarIcon: ({color}) => <Text style={{color}}>👤</Text>,
-        }}
+        options={{title: 'Perfil', tabBarIcon: profileTabIcon}}
       />
     </Tab.Navigator>
   );

@@ -21,7 +21,6 @@ jest.mock('../../api/sessionManager', () => ({
 
 // Mock navigators to keep the test lightweight
 jest.mock('../AuthNavigator', () => {
-  const React = require('react');
   const {View} = require('react-native');
   return function MockAuthNavigator() {
     return <View testID="auth-navigator" />;
@@ -29,7 +28,6 @@ jest.mock('../AuthNavigator', () => {
 });
 
 jest.mock('../AppNavigator', () => {
-  const React = require('react');
   const {View} = require('react-native');
   return function MockAppNavigator() {
     return <View testID="app-navigator" />;
