@@ -1,4 +1,4 @@
-﻿export const API_BASE_URL = 'http://25.57.92.63:5000/api';
+﻿export const API_BASE_URL = 'http://192.168.0.213:5000/api';
 
 export const REPORT_STATUSES = [
   'Pending',
