@@ -2,6 +2,7 @@ import {useRef, useState} from 'react';
 import {authService} from '../../../services/auth/authService';
 import {storageService} from '../../../storage/auth/storageService';
 import {isValidEmail} from '../../../utils';
+import type {User} from '../../../types';
 
 interface FieldErrors {
   email?: string;
@@ -49,7 +50,7 @@ function getErrorMessage(err: unknown): string {
   return 'Ocurrió un error inesperado. Intenta de nuevo.';
 }
 
-export function useLogin() {
+export function useLogin(onSuccess?: (user: User) => void) {
   const [state, setState] = useState<State>(INITIAL);
   const submitting = useRef(false);
 
@@ -113,6 +114,7 @@ export function useLogin() {
       });
       await storageService.saveSession(response.token, response.user);
       setState(prev => ({...prev, loading: false, success: true}));
+      onSuccess?.(response.user);
     } catch (err: unknown) {
       setState(prev => ({
         ...prev,

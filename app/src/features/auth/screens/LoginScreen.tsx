@@ -16,6 +16,7 @@ import {ErrorMessage} from '../../../components/auth/ErrorMessage';
 import {LoadingButton} from '../../../components/auth/LoadingButton';
 import {SuccessToast} from '../../../components/SuccessToast';
 import {useLogin} from '../hooks/useLogin';
+import {useAuth} from '../../../navigation/AuthContext';
 
 interface Props {
   onNavigateToRegister?: () => void;
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function LoginScreen({onNavigateToRegister, successMessage, onDismissSuccess}: Props) {
+  const {login} = useAuth();
   const {
     email,
     password,
@@ -36,7 +38,7 @@ export function LoginScreen({onNavigateToRegister, successMessage, onDismissSucc
     setPassword,
     toggleShowPassword,
     submit,
-  } = useLogin();
+  } = useLogin(login);
 
   if (success) {
     return (
