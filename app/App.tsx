@@ -26,7 +26,7 @@ const linking: LinkingOptions<RootParamList> = {
 };
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, _setIsAuthenticated] = useState(false);
   const [screen, setScreen] = useState<Screen>('login');
   const [loginToast, setLoginToast] = useState<string | null>(null);
 
