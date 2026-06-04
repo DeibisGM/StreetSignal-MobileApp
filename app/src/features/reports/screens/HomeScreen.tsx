@@ -1,10 +1,36 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import type {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
+import {useAuth} from '../../../navigation/AuthContext';
+import {Colors, Spacing, BorderRadius, Typography} from '../../../theme';
+import type {AppTabParamList} from '../../../navigation/types';
+
+type Nav = BottomTabNavigationProp<AppTabParamList>;
 
 export default function HomeScreen() {
+  const navigation = useNavigation<Nav>();
+  const {user} = useAuth();
+
   return (
     <View style={styles.container} testID="home-screen">
-      <Text style={styles.title}>Inicio</Text>
+      <Text style={styles.greeting}>
+        Hola, {user?.fullName?.split(' ')[0] ?? 'ciudadano'} 👋
+      </Text>
+      <Text style={styles.subtitle}>
+        ¿Detectaste un problema en tu comunidad?
+      </Text>
+
+      <TouchableOpacity
+        style={styles.createButton}
+        onPress={() => navigation.navigate('CreateReport')}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Crear nuevo reporte">
+        <Text style={styles.createButtonIcon}>📋</Text>
+        <Text style={styles.createButtonLabel}>Crear reporte</Text>
+        <Text style={styles.createButtonSub}>Foto + ubicación + descripción</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -12,13 +38,41 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
-    alignItems: 'center',
+    backgroundColor: Colors.background,
+    paddingHorizontal: Spacing.marginPage,
     justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.stackMd,
   },
-  title: {
-    fontSize: 24,
+  greeting: {
+    ...Typography.headlineLgMobile,
+    color: Colors.onSurface,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 15,
+    color: Colors.onSurfaceVariant,
+    textAlign: 'center',
+    marginBottom: Spacing.stackLg,
+  },
+  createButton: {
+    width: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.card,
+    paddingVertical: Spacing.stackLg,
+    alignItems: 'center',
+    gap: 6,
+  },
+  createButtonIcon: {
+    fontSize: 36,
+  },
+  createButtonLabel: {
+    fontSize: 20,
     fontWeight: '700',
-    color: '#1A3C5E',
+    color: Colors.onPrimary,
+  },
+  createButtonSub: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.75)',
   },
 });

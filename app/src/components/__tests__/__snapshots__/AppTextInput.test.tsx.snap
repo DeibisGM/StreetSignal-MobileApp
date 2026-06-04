@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AppTextInput renders disabled state 1`] = `null`;
+
+exports[`AppTextInput renders error state 1`] = `null`;
+
+exports[`AppTextInput renders helper text 1`] = `null`;
+
+exports[`AppTextInput renders with label and placeholder 1`] = `null`;

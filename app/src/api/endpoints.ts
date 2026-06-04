@@ -1,12 +1,12 @@
-// Set EXPO_PUBLIC_API_URL in .env to override per environment.
-// Requires babel-plugin-dotenv (or react-native-dotenv) — see api/README.md.
-declare const process: {env: Record<string, string | undefined>} | undefined;
+import { API_BASE_URL } from '../constants';
+
+declare const process: { env: Record<string, string | undefined> } | undefined;
 const ENV_URL =
   typeof process !== 'undefined'
     ? process?.env.EXPO_PUBLIC_API_URL
     : undefined;
 
-export const BASE_URL = ENV_URL ?? 'http://10.0.2.2:5000/api';
+export const BASE_URL = ENV_URL ?? API_BASE_URL;
 
 export const ENDPOINTS = {
   health: '/health',

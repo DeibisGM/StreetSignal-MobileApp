@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LoadingButton renders disabled state 1`] = `null`;
+
+exports[`LoadingButton renders ghost variant 1`] = `null`;
+
+exports[`LoadingButton renders idle primary 1`] = `null`;
+
+exports[`LoadingButton renders loading state 1`] = `null`;
