@@ -1,6 +1,7 @@
 import {useRef, useState} from 'react';
 import {authService} from '../../../services/auth/authService';
 import {storageService} from '../../../storage/auth/storageService';
+import {sessionManager} from '../../../api/sessionManager';
 import {isValidEmail} from '../../../utils';
 
 export type PasswordStrength = 'none' | 'weak' | 'medium' | 'strong';
@@ -178,6 +179,7 @@ export function useRegister() {
         confirmPassword: state.confirmPassword,
       });
       await storageService.saveSession(response.token, response.user);
+      sessionManager.setSession(response.token, response.user);
       setState(prev => ({...prev, loading: false, success: true}));
     } catch (err: unknown) {
       setState(prev => ({

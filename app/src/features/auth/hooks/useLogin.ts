@@ -1,6 +1,7 @@
 import {useRef, useState} from 'react';
 import {authService} from '../../../services/auth/authService';
 import {storageService} from '../../../storage/auth/storageService';
+import {sessionManager} from '../../../api/sessionManager';
 import {isValidEmail} from '../../../utils';
 import type {User} from '../../../types';
 
@@ -113,6 +114,7 @@ export function useLogin(onSuccess?: (user: User) => void) {
         password: state.password,
       });
       await storageService.saveSession(response.token, response.user);
+      sessionManager.setSession(response.token, response.user);
       setState(prev => ({...prev, loading: false, success: true}));
       onSuccess?.(response.user);
     } catch (err: unknown) {
