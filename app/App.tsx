@@ -4,6 +4,10 @@ import {NavigationContainer, LinkingOptions} from '@react-navigation/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {RootNavigator} from './src/navigation';
 import {RootParamList} from './src/navigation/types';
+import {ComponentsDemo} from './src/components/__demo__/ComponentsDemo';
+
+// Set to true to preview the design-system component library
+const SHOW_COMPONENTS_DEMO = false;
 
 const linking: LinkingOptions<RootParamList> = {
   prefixes: ['streetsignal://'],
@@ -23,6 +27,10 @@ const linking: LinkingOptions<RootParamList> = {
 };
 
 export default function App() {
+  if (SHOW_COMPONENTS_DEMO) {
+    return <ComponentsDemo />;
+  }
+
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" backgroundColor="#1A3C5E" />

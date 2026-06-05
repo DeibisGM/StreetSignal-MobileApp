@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
-import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, StyleSheet, Text} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {AuthStackParamList} from '../../../navigation/types';
@@ -17,10 +18,10 @@ export default function SplashScreen() {
   }, [navigation]);
 
   return (
-    <View style={styles.container} testID="splash-screen">
+    <SafeAreaView style={styles.container} testID="splash-screen">
       <Text style={styles.title}>StreetSignal</Text>
       <ActivityIndicator size="large" color="#A8C4E0" style={styles.spinner} />
-    </View>
+    </SafeAreaView>
   );
 }
 
