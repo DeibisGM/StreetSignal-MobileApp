@@ -1,5 +1,6 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
+import {act} from 'react-test-renderer';
 import {UpdateTimelineItem} from '../UpdateTimelineItem';
 import type {ReportUpdate} from '../../types';
 
@@ -29,23 +30,32 @@ const statusUpdate: ReportUpdate = {
 
 describe('UpdateTimelineItem', () => {
   it('renders comment update', () => {
-    const tree = renderer
-      .create(<UpdateTimelineItem update={commentUpdate} />)
-      .toJSON();
+    let tree;
+    act(() => {
+      tree = renderer
+        .create(<UpdateTimelineItem update={commentUpdate} />)
+        .toJSON();
+    });
     expect(tree).toMatchSnapshot();
   });
 
   it('renders status-change update', () => {
-    const tree = renderer
-      .create(<UpdateTimelineItem update={statusUpdate} />)
-      .toJSON();
+    let tree;
+    act(() => {
+      tree = renderer
+        .create(<UpdateTimelineItem update={statusUpdate} />)
+        .toJSON();
+    });
     expect(tree).toMatchSnapshot();
   });
 
   it('renders last item (no connector line)', () => {
-    const tree = renderer
-      .create(<UpdateTimelineItem update={commentUpdate} isLast />)
-      .toJSON();
+    let tree;
+    act(() => {
+      tree = renderer
+        .create(<UpdateTimelineItem update={commentUpdate} isLast />)
+        .toJSON();
+    });
     expect(tree).toMatchSnapshot();
   });
 });
