@@ -2,31 +2,49 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {User} from '../types';
 import {storageService} from '../storage';
 import {sessionManager} from '../api/sessionManager';
+import {authService} from '../api/authService';
 import {AuthContext, AuthContextValue} from './AuthContext';
 import AuthNavigator from './AuthNavigator';
 import AppNavigator from './AppNavigator';
+import SplashScreen from '../features/auth/screens/SplashScreen';
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
+
+const SPLASH_TIMEOUT_MS = 3_000;
 
 export default function RootNavigator() {
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    storageService
-      .loadSession()
-      .then(session => {
-        if (session) {
-          sessionManager.setSession(session.token, session.user);
-          setUser(session.user);
+    let cancelled = false;
+
+    const timeout = new Promise<null>(resolve =>
+      setTimeout(() => resolve(null), SPLASH_TIMEOUT_MS),
+    );
+
+    Promise.race([authService.restoreSession(), timeout])
+      .then(result => {
+        if (cancelled) return;
+        if (result) {
+          setUser(result.user);
           setStatus('authenticated');
         } else {
+          sessionManager.clearSession();
+          storageService.clearSession().catch(() => {});
           setStatus('unauthenticated');
         }
       })
       .catch(() => {
+        if (cancelled) return;
+        sessionManager.clearSession();
+        storageService.clearSession().catch(() => {});
         setStatus('unauthenticated');
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = useCallback((loggedUser: User) => {
@@ -52,9 +70,8 @@ export default function RootNavigator() {
     logout,
   };
 
-  // Show nothing while the stored session is being read.
   if (status === 'loading') {
-    return null;
+    return <SplashScreen />;
   }
 
   return (

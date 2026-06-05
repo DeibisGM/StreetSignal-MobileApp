@@ -6,7 +6,7 @@ const ENV_URL =
     ? process?.env.EXPO_PUBLIC_API_URL
     : undefined;
 
-export const BASE_URL = ENV_URL ?? 'http://10.0.2.2:5000/api';
+export const BASE_URL = ENV_URL ?? 'http://192.168.100.130:5000/api';
 
 export const ENDPOINTS = {
   health: '/health',
