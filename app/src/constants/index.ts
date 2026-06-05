@@ -2,7 +2,7 @@
 
 function getDevApiBaseUrl(): string {
   if (Platform.OS === 'android') {
-    return 'http://192.168.18.10:5000/api';
+    return 'http://192.168.0.106:5000/api';
   }
 
   if (Platform.OS === 'web') {

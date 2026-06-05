@@ -1,8 +1,7 @@
 import {useRef, useState} from 'react';
-import {authService} from '../../../services/auth/authService';
-import {storageService} from '../../../storage'; // Keychain-backed — same store restoreSession reads from
-import {sessionManager} from '../../../api/sessionManager';
+import {authService} from '../../../api/authService';
 import {isValidEmail} from '../../../utils';
+import {useLanguage} from '../../../i18n';
 import type {User} from '../../../types';
 
 interface FieldErrors {
@@ -28,30 +27,34 @@ const INITIAL: State = {
   fieldErrors: {},
 };
 
-function getErrorMessage(err: unknown): string {
-  if (err instanceof TypeError && err.message.includes('Network request failed')) {
-    return 'Sin conexión a internet. Verifica tu red e intenta de nuevo.';
-  }
-  if (err instanceof Error) {
-    const msg = err.message.toLowerCase();
-    if (
-      msg.includes('401') ||
-      msg.includes('invalid') ||
-      msg.includes('credentials') ||
-      msg.includes('unauthorized')
-    ) {
-      return 'Credenciales incorrectas. Verifica tu correo y contraseña.';
-    }
-    if (msg.includes('500') || msg.includes('502') || msg.includes('503')) {
-      return 'Error en el servidor. Intenta de nuevo en unos momentos.';
-    }
-  }
-  return 'Ocurrió un error inesperado. Intenta de nuevo.';
-}
-
 export function useLogin(onSuccess?: (user: User) => void) {
+  const {t} = useLanguage();
+  const v = t.auth.validation;
+  const e = t.auth.errors;
+
   const [state, setState] = useState<State>(INITIAL);
   const submitting = useRef(false);
+
+  function getErrorMessage(err: unknown): string {
+    if (err instanceof TypeError && err.message.includes('Network request failed')) {
+      return e.noInternet;
+    }
+    if (err instanceof Error) {
+      const msg = err.message.toLowerCase();
+      if (
+        msg.includes('401') ||
+        msg.includes('invalid') ||
+        msg.includes('credentials') ||
+        msg.includes('unauthorized')
+      ) {
+        return e.invalidCredentials;
+      }
+      if (msg.includes('500') || msg.includes('502') || msg.includes('503')) {
+        return e.serverError;
+      }
+    }
+    return e.unexpected;
+  }
 
   function clearFieldError(field: keyof FieldErrors) {
     setState(prev => {
@@ -84,12 +87,12 @@ export function useLogin(onSuccess?: (user: User) => void) {
   function validate(): boolean {
     const errors: FieldErrors = {};
     if (!state.email.trim()) {
-      errors.email = 'El correo es obligatorio';
+      errors.email = v.emailRequired;
     } else if (!isValidEmail(state.email.trim())) {
-      errors.email = 'Ingresa un correo con formato válido';
+      errors.email = v.emailInvalid;
     }
     if (!state.password) {
-      errors.password = 'La contraseña es obligatoria';
+      errors.password = v.passwordRequired;
     }
     setState(prev => ({...prev, fieldErrors: errors}));
     return Object.keys(errors).length === 0;
@@ -111,8 +114,6 @@ export function useLogin(onSuccess?: (user: User) => void) {
         email: state.email.trim().toLowerCase(),
         password: state.password,
       });
-      sessionManager.setSession(response.token, response.user);
-      storageService.saveSession(response.token, response.user).catch(() => {});
       setState(prev => ({...prev, loading: false}));
       onSuccess?.(response.user);
     } catch (err: unknown) {

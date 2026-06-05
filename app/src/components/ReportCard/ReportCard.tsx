@@ -2,7 +2,7 @@ import React from 'react';
 import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Camera, ImageBroken, MapPin} from 'phosphor-react-native';
 import {Colors, BorderRadius, Spacing} from '../../theme';
-import {REPORT_STATUS_LABELS} from '../../constants';
+import {useLanguage} from '../../i18n';
 import {formatDate} from '../../utils';
 import type {Report, ReportStatus} from '../../types';
 
@@ -13,9 +13,10 @@ interface ReportCardProps {
 }
 
 export function ReportCard({report, onPress, testID}: ReportCardProps) {
-  const dateStr = formatDate(report.createdAt);
+  const {t} = useLanguage();
+  const dateStr = formatDate(report.createdAt, t.dateLocale);
   const statusStyle = STATUS_STYLES[report.status] ?? STATUS_STYLES.Pending;
-  const statusLabel = REPORT_STATUS_LABELS[report.status] ?? report.status;
+  const statusLabel = t.statusLabels[report.status] ?? report.status;
   const hasLocation = !!(report.address || (report.latitude && report.longitude));
   const showImage = !!report.imageUrl;
 
@@ -26,14 +27,14 @@ export function ReportCard({report, onPress, testID}: ReportCardProps) {
       activeOpacity={0.8}
       testID={testID ?? `report-card-${report.id}`}
       accessibilityRole="button"
-      accessibilityLabel={`Reporte: ${report.title}. Estado: ${report.status}`}>
+      accessibilityLabel={`${report.title}. ${statusLabel}`}>
       <View style={styles.thumbnailWrapper}>
         {showImage ? (
           <Image
             source={{uri: report.imageUrl}}
             style={styles.thumbnail}
             resizeMode="cover"
-            accessibilityLabel="Foto del reporte"
+            accessibilityLabel={t.reports.card.photoA11y}
             onError={() => {}}
           />
         ) : (
@@ -66,7 +67,7 @@ export function ReportCard({report, onPress, testID}: ReportCardProps) {
           <View style={styles.locationRow}>
             <MapPin size={11} color={Colors.onSurfaceVariant} weight="fill" />
             <Text style={styles.locationText} numberOfLines={1}>
-              {report.address ?? 'Con ubicación'}
+              {report.address ?? t.reports.card.withLocation}
             </Text>
           </View>
         ) : null}

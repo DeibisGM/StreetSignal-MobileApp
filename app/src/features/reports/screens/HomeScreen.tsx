@@ -18,6 +18,7 @@ import {ErrorMessage, ReportCard} from '../../../components';
 import {reportsService} from '../../../api/reportsService';
 import {ApiError} from '../../../api/types';
 import {useAuth} from '../../../navigation/AuthContext';
+import {useLanguage} from '../../../i18n';
 import {BorderRadius, Colors, Spacing} from '../../../theme';
 import type {AppTabParamList, HomeStackParamList} from '../../../navigation/types';
 import type {Report} from '../../../types';
@@ -30,7 +31,9 @@ export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const parentNavigation = navigation.getParent<TabNav>();
   const {user} = useAuth();
-  const firstName = user?.fullName?.split(' ')[0] ?? 'ciudadano';
+  const {t} = useLanguage();
+  const h = t.home;
+  const firstName = user?.fullName?.split(' ')[0] ?? h.defaultGreeting;
   const [reports, setReports] = React.useState<Report[]>([]);
   const [loadingReports, setLoadingReports] = React.useState(true);
   const [reportsError, setReportsError] = React.useState<string | null>(null);
@@ -85,7 +88,7 @@ export default function HomeScreen() {
             style={styles.notifBtn}
             onPress={goToNotifs}
             accessibilityRole="button"
-            accessibilityLabel="Notificaciones">
+            accessibilityLabel={h.notificationsA11y}>
             <Bell size={20} color="#fff" weight="regular" />
           </TouchableOpacity>
         </View>
@@ -103,14 +106,14 @@ export default function HomeScreen() {
           onPress={goToCreate}
           activeOpacity={0.88}
           accessibilityRole="button"
-          accessibilityLabel="Crear nuevo reporte">
+          accessibilityLabel={h.newReportA11y}>
           <View style={styles.createCardLeft}>
             <View style={styles.createIconBg}>
               <PlusCircle size={26} color="#fff" weight="fill" />
             </View>
             <View>
-              <Text style={styles.createCardTitle}>Nuevo reporte</Text>
-              <Text style={styles.createCardSub}>Foto · Categoría · Ubicación</Text>
+              <Text style={styles.createCardTitle}>{h.newReportTitle}</Text>
+              <Text style={styles.createCardSub}>{h.newReportSub}</Text>
             </View>
           </View>
           <View style={styles.createArrow}>
@@ -119,13 +122,13 @@ export default function HomeScreen() {
         </TouchableOpacity>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Mis reportes</Text>
+          <Text style={styles.sectionTitle}>{h.myReports}</Text>
         </View>
 
         {loadingReports ? (
           <View style={styles.loadingBox} testID="home-reports-loading">
             <ActivityIndicator color={Colors.primary} />
-            <Text style={styles.loadingText}>Cargando tus reportes...</Text>
+            <Text style={styles.loadingText}>{h.loadingReports}</Text>
           </View>
         ) : reportsError ? (
           <View testID="home-reports-error">
@@ -147,16 +150,14 @@ export default function HomeScreen() {
             <View style={styles.emptyIconWrap}>
               <ClipboardText size={30} color={Colors.primary} weight="light" />
             </View>
-            <Text style={styles.emptyTitle}>Aún no tienes reportes</Text>
-            <Text style={styles.emptySub}>
-              Cuando crees un reporte aparecerá aquí con su estado actualizado.
-            </Text>
+            <Text style={styles.emptyTitle}>{h.emptyTitle}</Text>
+            <Text style={styles.emptySub}>{h.emptySub}</Text>
             <TouchableOpacity
               style={styles.emptyBtn}
               onPress={goToCreate}
               activeOpacity={0.85}>
               <PlusCircle size={15} color="#fff" weight="fill" />
-              <Text style={styles.emptyBtnText}>Crear mi primer reporte</Text>
+              <Text style={styles.emptyBtnText}>{h.createFirst}</Text>
             </TouchableOpacity>
           </View>
         )}

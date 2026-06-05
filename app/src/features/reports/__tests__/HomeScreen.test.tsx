@@ -3,6 +3,7 @@ import {render, act} from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {AuthContext} from '../../../navigation/AuthContext';
+import {LanguageProvider} from '../../../i18n';
 import {reportsService} from '../../../api/reportsService';
 
 jest.mock('../../../api/reportsService');
@@ -44,9 +45,11 @@ const mockAuthValue = {
 function renderHomeScreen() {
   const HomeScreen = require('../screens/HomeScreen').default;
   return render(
-    <AuthContext.Provider value={mockAuthValue}>
-      <HomeScreen />
-    </AuthContext.Provider>,
+    <LanguageProvider>
+      <AuthContext.Provider value={mockAuthValue}>
+        <HomeScreen />
+      </AuthContext.Provider>
+    </LanguageProvider>,
   );
 }
 

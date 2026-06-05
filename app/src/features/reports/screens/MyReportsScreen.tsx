@@ -16,6 +16,7 @@ import {ErrorMessage, ReportCard} from '../../../components';
 import {reportsService} from '../../../api/reportsService';
 import {ApiError} from '../../../api/types';
 import {Colors, Spacing} from '../../../theme';
+import {useLanguage} from '../../../i18n';
 import {HomeStackParamList} from '../../../navigation/types';
 import type {Report} from '../../../types';
 
@@ -24,6 +25,8 @@ type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
 export default function MyReportsScreen(_props: Props) {
   const navigation = useNavigation<Nav>();
+  const {t} = useLanguage();
+  const mr = t.reports.myReports;
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -46,7 +49,7 @@ export default function MyReportsScreen(_props: Props) {
         setError(
           err instanceof ApiError
             ? err.message
-            : 'No se pudieron cargar tus reportes.',
+            : mr.loadError,
         );
       }
     } finally {
@@ -75,7 +78,7 @@ export default function MyReportsScreen(_props: Props) {
     return (
       <View style={styles.center} testID="my-reports-loading">
         <ActivityIndicator color={Colors.primary} />
-        <Text style={styles.centerText}>Cargando tus reportes...</Text>
+        <Text style={styles.centerText}>{mr.loading}</Text>
       </View>
     );
   }
@@ -89,8 +92,8 @@ export default function MyReportsScreen(_props: Props) {
           onPress={loadReports}
           activeOpacity={0.8}
           accessibilityRole="button"
-          accessibilityLabel="Reintentar carga de mis reportes">
-          <Text style={styles.retryLabel}>Reintentar</Text>
+          accessibilityLabel={mr.retryA11y}>
+          <Text style={styles.retryLabel}>{mr.retry}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -99,10 +102,8 @@ export default function MyReportsScreen(_props: Props) {
   return (
     <View style={styles.root} testID="my-reports-screen">
       <View style={styles.header}>
-        <Text style={styles.title}>Mis reportes</Text>
-        <Text style={styles.subtitle}>
-          Revisa el estado actual y el historial de cada reporte.
-        </Text>
+        <Text style={styles.title}>{mr.title}</Text>
+        <Text style={styles.subtitle}>{mr.subtitle}</Text>
       </View>
 
       <FlatList
@@ -128,10 +129,8 @@ export default function MyReportsScreen(_props: Props) {
         ]}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>Todavía no tienes reportes.</Text>
-            <Text style={styles.emptyText}>
-              Cuando envíes uno, aparecerá aquí con su estado e historial.
-            </Text>
+            <Text style={styles.emptyTitle}>{mr.emptyTitle}</Text>
+            <Text style={styles.emptyText}>{mr.emptySub}</Text>
           </View>
         }
         ItemSeparatorComponent={() => <View style={styles.separator} />}

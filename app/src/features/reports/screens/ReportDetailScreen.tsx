@@ -6,6 +6,7 @@ import {ErrorMessage, LoadingButton} from '../../../components';
 import {reportsService} from '../../../api/reportsService';
 import {ApiError} from '../../../api/types';
 import {Colors, Spacing} from '../../../theme';
+import {useLanguage} from '../../../i18n';
 import {ReportDetailView} from '../components/ReportDetailView';
 import {HomeStackParamList} from '../../../navigation/types';
 import type {Report} from '../../../types';
@@ -13,6 +14,8 @@ import type {Report} from '../../../types';
 type Props = NativeStackScreenProps<HomeStackParamList, 'ReportDetail'>;
 
 export default function ReportDetailScreen({route}: Props) {
+  const {t} = useLanguage();
+  const rd = t.reports.detail;
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +34,7 @@ export default function ReportDetailScreen({route}: Props) {
         setError(
           err instanceof ApiError
             ? err.message
-            : 'No se pudo cargar el detalle del reporte.',
+            : rd.loadError,
         );
       }
     } finally {
@@ -56,7 +59,7 @@ export default function ReportDetailScreen({route}: Props) {
     return (
       <View style={styles.center} testID="report-detail-loading">
         <ActivityIndicator color={Colors.primary} />
-        <Text style={styles.centerText}>Cargando reporte...</Text>
+        <Text style={styles.centerText}>{rd.loading}</Text>
       </View>
     );
   }
@@ -65,7 +68,7 @@ export default function ReportDetailScreen({route}: Props) {
     return (
       <View style={styles.center} testID="report-detail-error">
         <ErrorMessage message={error} />
-        <LoadingButton label="Reintentar" onPress={loadReport} />
+        <LoadingButton label={rd.retry} onPress={loadReport} />
       </View>
     );
   }

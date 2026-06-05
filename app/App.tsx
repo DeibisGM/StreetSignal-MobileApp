@@ -5,6 +5,7 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {RootNavigator} from './src/navigation';
 import {RootParamList} from './src/navigation/types';
 import {ComponentsDemo} from './src/components/__demo__/ComponentsDemo';
+import {LanguageProvider} from './src/i18n';
 
 // Set to true to preview the design-system component library
 const SHOW_COMPONENTS_DEMO = false;
@@ -32,11 +33,13 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor="#1A3C5E" />
-      <NavigationContainer linking={linking}>
-        <RootNavigator />
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <LanguageProvider>
+      <SafeAreaProvider>
+        <StatusBar barStyle="light-content" backgroundColor="#1A3C5E" />
+        <NavigationContainer linking={linking}>
+          <RootNavigator />
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </LanguageProvider>
   );
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import renderer from 'react-test-renderer';
 import {act} from 'react-test-renderer';
 import {ReportCard} from '../ReportCard';
+import {LanguageProvider} from '../../i18n';
 import type {Report} from '../../types';
 
 const mockReport: Report = {
@@ -23,7 +24,7 @@ describe('ReportCard', () => {
   it('renders without image', () => {
     let tree;
     act(() => {
-      tree = renderer.create(<ReportCard report={mockReport} />).toJSON();
+      tree = renderer.create(<LanguageProvider><ReportCard report={mockReport} /></LanguageProvider>).toJSON();
     });
     expect(tree).toMatchSnapshot();
   });
@@ -36,7 +37,7 @@ describe('ReportCard', () => {
     let tree;
     act(() => {
       tree = renderer
-        .create(<ReportCard report={reportWithImage} />)
+        .create(<LanguageProvider><ReportCard report={reportWithImage} /></LanguageProvider>)
         .toJSON();
     });
     expect(tree).toMatchSnapshot();
@@ -46,7 +47,7 @@ describe('ReportCard', () => {
     const resolved: Report = {...mockReport, status: 'Resolved'};
     let tree;
     act(() => {
-      tree = renderer.create(<ReportCard report={resolved} />).toJSON();
+      tree = renderer.create(<LanguageProvider><ReportCard report={resolved} /></LanguageProvider>).toJSON();
     });
     expect(tree).toMatchSnapshot();
   });

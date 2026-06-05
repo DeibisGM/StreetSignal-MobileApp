@@ -1,7 +1,9 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
+  Modal,
   RefreshControl,
   StyleSheet,
   Text,
@@ -10,7 +12,8 @@ import {
 } from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {MagnifyingGlass, X} from 'phosphor-react-native';
+import {MagnifyingGlass, SignOut, X} from 'phosphor-react-native';
+import {useAuth} from '../../../navigation/AuthContext';
 
 import {AppTextInput, ErrorMessage, ReportCard} from '../../../components';
 import {categoriesService} from '../../../api/categoriesService';
@@ -18,6 +21,7 @@ import {reportsService} from '../../../api/reportsService';
 import {ApiError} from '../../../api/types';
 import {STORAGE_KEYS, storageService} from '../../../storage/storageService';
 import {Colors, BorderRadius, Spacing} from '../../../theme';
+import {useLanguage} from '../../../i18n';
 import {StaffStackParamList} from '../../../navigation/types';
 import type {Category, Report, ReportStatus} from '../../../types';
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -113,6 +117,11 @@ function buildStaffReportParams(
 
 export default function StaffReportsListScreen() {
   const navigation = useNavigation<Nav>();
+  const {t} = useLanguage();
+  const sl = t.staff.list;
+  const so = t.navigation.signOut;
+  const {logout} = useAuth();
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filter, setFilter] = useState<StaffReportsFilterState>(DEFAULT_FILTER);
@@ -189,7 +198,7 @@ export default function StaffReportsListScreen() {
       }
     } catch (err) {
       if (mountedRef.current) {
-        setError(err instanceof ApiError ? err.message : 'Could not load reports.');
+        setError(err instanceof ApiError ? err.message : sl.loadError);
       }
     } finally {
       if (mountedRef.current) {
@@ -302,7 +311,7 @@ export default function StaffReportsListScreen() {
     return (
       <View style={styles.center} testID="staff-reports-list-loading">
         <ActivityIndicator color={Colors.primary} />
-        <Text style={styles.centerText}>Loading reports...</Text>
+        <Text style={styles.centerText}>{sl.loading}</Text>
       </View>
     );
   }
@@ -317,8 +326,8 @@ export default function StaffReportsListScreen() {
           onPress={() => {void loadReports(filter, 1, 'replace');}}
           activeOpacity={0.8}
           accessibilityRole="button"
-          accessibilityLabel="Retry loading reports">
-          <Text style={styles.retryLabel}>Retry</Text>
+          accessibilityLabel={sl.retryA11y}>
+          <Text style={styles.retryLabel}>{sl.retry}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -328,17 +337,27 @@ export default function StaffReportsListScreen() {
   const ListHeader = (
     <View style={styles.headerWrapper}>
       <View style={styles.titleBlock}>
-        <Text style={styles.title}>All reports</Text>
-        <Text style={styles.subtitle}>
-          Staff review queue · Use filters to narrow the list.
-        </Text>
+        <View style={styles.titleRow}>
+          <View style={styles.titleTexts}>
+            <Text style={styles.title}>{sl.title}</Text>
+            <Text style={styles.subtitle}>{sl.subtitle}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.signOutBtn}
+            onPress={() => setLogoutModalVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel={so.accessibilityLabel}
+            testID="staff-sign-out-button">
+            <SignOut size={20} color="#DC2626" weight="regular" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.filtersPanel}>
         {/* Búsqueda */}
         <AppTextInput
-          label="Search by title"
-          placeholder="Type a report title"
+          label={sl.searchLabel}
+          placeholder={sl.searchPlaceholder}
           value={filter.search}
           onChangeText={handleSearchChange}
           onSubmitEditing={commitSearch}
@@ -356,7 +375,7 @@ export default function StaffReportsListScreen() {
                   void applyFilter(nextFilter);
                 }}
                 accessibilityRole="button"
-                accessibilityLabel="Clear search">
+                accessibilityLabel={sl.clearSearchA11y}>
                 <X size={18} color="#64748B" weight="regular" />
               </TouchableOpacity>
             ) : undefined
@@ -364,7 +383,7 @@ export default function StaffReportsListScreen() {
         />
 
         {/* Status chips */}
-        <Text style={styles.filterLabel}>Status</Text>
+        <Text style={styles.filterLabel}>{sl.statusFilter}</Text>
         <View style={styles.chipRow}>
           {STATUS_OPTIONS.map(status => {
             const selected = filter.status === status;
@@ -377,7 +396,7 @@ export default function StaffReportsListScreen() {
                 accessibilityState={{selected}}
                 testID={`status-filter-${status}`}>
                 <Text style={[styles.chipLabel, selected && styles.chipLabelSelected]}>
-                  {status}
+                  {status === 'All' ? sl.allOption : (t.statusLabels[status] ?? status)}
                 </Text>
               </TouchableOpacity>
             );
@@ -385,7 +404,7 @@ export default function StaffReportsListScreen() {
         </View>
 
         {/* Category chips */}
-        <Text style={styles.filterLabel}>Category</Text>
+        <Text style={styles.filterLabel}>{sl.categoryFilter}</Text>
         <View style={styles.chipRow}>
           <TouchableOpacity
             style={[styles.chip, !filter.categoryId && styles.chipSelected]}
@@ -394,7 +413,7 @@ export default function StaffReportsListScreen() {
             accessibilityState={{selected: !filter.categoryId}}
             testID="category-filter-all">
             <Text style={[styles.chipLabel, !filter.categoryId && styles.chipLabelSelected]}>
-              All
+              {sl.allOption}
             </Text>
           </TouchableOpacity>
           {categories.map(category => {
@@ -425,15 +444,13 @@ export default function StaffReportsListScreen() {
             onPress={handleClearFilters}
             disabled={activeFiltersCount === 0}
             accessibilityRole="button"
-            accessibilityLabel="Clear all filters">
-            <Text style={styles.clearButtonLabel}>Clear filters</Text>
+            accessibilityLabel={sl.clearFiltersA11y}>
+            <Text style={styles.clearButtonLabel}>{sl.clearFilters}</Text>
           </TouchableOpacity>
-          <Text style={styles.activeCount}>{activeFiltersCount} active</Text>
+          <Text style={styles.activeCount}>{sl.activeFilters(activeFiltersCount)}</Text>
         </View>
 
-        <Text style={styles.totalCount}>
-          {reports.length} loaded of {total} total
-        </Text>
+        <Text style={styles.totalCount}>{sl.countLabel(reports.length, total)}</Text>
       </View>
 
       {/* Error parcial (hay datos pero también error) */}
@@ -446,55 +463,91 @@ export default function StaffReportsListScreen() {
   );
 
   return (
-    <FlatList
-      style={styles.root}
-      testID="staff-reports-list-screen"
-      data={reports}
-      keyExtractor={item => item.id}
-      renderItem={({item}) => (
-        <ReportCard
-          report={item}
-          onPress={() =>
-            navigation.navigate('StaffReportDetail', {reportId: item.id})
-          }
-          testID={`staff-report-card-${item.id}`}
-        />
-      )}
-      ListHeaderComponent={ListHeader}
-      ListEmptyComponent={
-        !loading ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No reports found.</Text>
-            <Text style={styles.emptyText}>
-              Try adjusting status, category, or title search.
-            </Text>
+    <>
+      <FlatList
+        style={styles.root}
+        testID="staff-reports-list-screen"
+        data={reports}
+        keyExtractor={item => item.id}
+        renderItem={({item}) => (
+          <ReportCard
+            report={item}
+            onPress={() =>
+              navigation.navigate('StaffReportDetail', {reportId: item.id})
+            }
+            testID={`staff-report-card-${item.id}`}
+          />
+        )}
+        ListHeaderComponent={ListHeader}
+        ListEmptyComponent={
+          !loading ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>{sl.emptyTitle}</Text>
+              <Text style={styles.emptyText}>{sl.emptyHint}</Text>
+            </View>
+          ) : null
+        }
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={styles.footer}>
+              <ActivityIndicator color={Colors.primary} />
+              <Text style={styles.footerText}>{sl.loadingMore}</Text>
+            </View>
+          ) : null
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {void handleRefresh();}}
+            tintColor={Colors.primary}
+          />
+        }
+        contentContainerStyle={[
+          styles.listContent,
+          reports.length === 0 && styles.emptyListContent,
+        ]}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        onEndReachedThreshold={0.4}
+        onEndReached={() => {void handleLoadMore();}}
+        showsVerticalScrollIndicator={false}
+      />
+
+      <Modal
+        transparent
+        visible={logoutModalVisible}
+        animationType="fade"
+        onRequestClose={() => setLogoutModalVisible(false)}>
+        <TouchableOpacity
+          style={modalStyles.overlay}
+          activeOpacity={1}
+          onPress={() => setLogoutModalVisible(false)}>
+          <View style={modalStyles.card} onStartShouldSetResponder={() => true}>
+            <View style={modalStyles.iconWrap}>
+              <SignOut size={28} color="#DC2626" weight="regular" />
+            </View>
+            <Text style={modalStyles.title}>{so.confirmTitle}</Text>
+            <Text style={modalStyles.sub}>{so.confirmMessage}</Text>
+            <View style={modalStyles.buttons}>
+              <TouchableOpacity
+                style={modalStyles.cancelBtn}
+                onPress={() => setLogoutModalVisible(false)}
+                activeOpacity={0.8}>
+                <Text style={modalStyles.cancelText}>{so.cancel}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={modalStyles.confirmBtn}
+                onPress={async () => {
+                  setLogoutModalVisible(false);
+                  await logout();
+                }}
+                activeOpacity={0.8}>
+                <Text style={modalStyles.confirmText}>{so.confirm}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        ) : null
-      }
-      ListFooterComponent={
-        loadingMore ? (
-          <View style={styles.footer}>
-            <ActivityIndicator color={Colors.primary} />
-            <Text style={styles.footerText}>Loading more reports...</Text>
-          </View>
-        ) : null
-      }
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => {void handleRefresh();}}
-          tintColor={Colors.primary}
-        />
-      }
-      contentContainerStyle={[
-        styles.listContent,
-        reports.length === 0 && styles.emptyListContent,
-      ]}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
-      onEndReachedThreshold={0.4}
-      onEndReached={() => {void handleLoadMore();}}
-      showsVerticalScrollIndicator={false}
-    />
+        </TouchableOpacity>
+      </Modal>
+    </>
   );
 }
 
@@ -510,6 +563,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.marginPage,
     paddingTop: Spacing.stackLg,
     paddingBottom: Spacing.stackMd,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  titleTexts: {
+    flex: 1,
+    gap: 6,
+  },
+  signOutBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
   },
   title: {
     fontSize: 28,
@@ -657,5 +729,77 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+});
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  card: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+  },
+  sub: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  buttons: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+    marginTop: 4,
+  },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+  },
+  cancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  confirmBtn: {
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 10,
+    backgroundColor: '#DC2626',
+    alignItems: 'center',
+  },
+  confirmText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
   },
 });

@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import {BorderRadius} from '../../theme';
-import {REPORT_STATUS_LABELS} from '../../constants';
+import {useLanguage} from '../../i18n';
 import type {ReportStatus} from '../../types';
 
 interface StatusBadgeProps {
@@ -21,8 +21,9 @@ const STATUS_STYLES: Record<ReportStatus, StatusStyle> = {
 };
 
 export function StatusBadge({status, testID}: StatusBadgeProps) {
+  const {t} = useLanguage();
   const {bg, color} = STATUS_STYLES[status] ?? STATUS_STYLES.Pending;
-  const label = REPORT_STATUS_LABELS[status] ?? status;
+  const label = t.statusLabels[status] ?? status;
 
   return (
     <View

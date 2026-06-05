@@ -4,7 +4,8 @@ import {ImageBroken, MapPin} from 'phosphor-react-native';
 
 import {StatusBadge, UpdateTimelineItem} from '../../../components';
 import {Colors, BorderRadius, Spacing} from '../../../theme';
-import {formatDate, statusLabel} from '../../../utils';
+import {formatDate} from '../../../utils';
+import {useLanguage} from '../../../i18n';
 import type {Report} from '../../../types';
 
 interface ReportDetailViewProps {
@@ -18,6 +19,8 @@ export function ReportDetailView({
   children,
   testID,
 }: ReportDetailViewProps) {
+  const {t} = useLanguage();
+  const rd = t.reports.detail;
   const [imgError, setImgError] = React.useState(false);
   const updates = report.updates ?? [];
   const showImage = !!report.imageUrl && !imgError;
@@ -34,14 +37,14 @@ export function ReportDetailView({
             source={{uri: report.imageUrl}}
             style={styles.image}
             resizeMode="cover"
-            accessibilityLabel="Foto del reporte"
+            accessibilityLabel={rd.photoA11y}
             onError={() => setImgError(true)}
           />
         ) : (
           <View style={styles.imagePlaceholder}>
             <ImageBroken size={32} color={Colors.outlineVariant} weight="light" />
             <Text style={styles.imagePlaceholderText}>
-              {imgError ? 'No se pudo cargar la imagen' : 'Sin foto'}
+              {imgError ? rd.photoError : rd.noPhoto}
             </Text>
           </View>
         )}
@@ -54,9 +57,9 @@ export function ReportDetailView({
 
           <Text style={styles.title}>{report.title}</Text>
           <Text style={styles.meta}>
-            Reporte creado por {report.createdByName}
+            {rd.createdBy} {report.createdByName}
           </Text>
-          <Text style={styles.meta}>{formatDate(report.createdAt)}</Text>
+          <Text style={styles.meta}>{formatDate(report.createdAt, t.dateLocale)}</Text>
 
           {report.address ? (
             <View style={styles.addressRow}>
@@ -67,7 +70,7 @@ export function ReportDetailView({
 
           <Text style={styles.description}>{report.description}</Text>
           <Text style={styles.statusHint}>
-            Estado actual: {statusLabel(report.status)}
+            {rd.currentStatus}: {t.statusLabels[report.status] ?? report.status}
           </Text>
         </View>
       </View>
@@ -75,7 +78,7 @@ export function ReportDetailView({
       {children ? <View style={styles.panelSlot}>{children}</View> : null}
 
       <View style={styles.timelineSection}>
-        <Text style={styles.sectionTitle}>Historial</Text>
+        <Text style={styles.sectionTitle}>{rd.history}</Text>
         {updates.length ? (
           <View style={styles.timelineList}>
             {updates.map((update, index) => (
@@ -87,9 +90,7 @@ export function ReportDetailView({
             ))}
           </View>
         ) : (
-          <Text style={styles.emptyText}>
-            Todavía no hay actualizaciones registradas.
-          </Text>
+          <Text style={styles.emptyText}>{rd.noUpdates}</Text>
         )}
       </View>
     </ScrollView>
