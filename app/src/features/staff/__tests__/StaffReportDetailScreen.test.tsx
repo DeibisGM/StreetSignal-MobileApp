@@ -9,6 +9,16 @@ jest.mock('../../../api/usersService');
 jest.mock('../../reports/components/ReportDetailView', () => ({
   ReportDetailView: ({children}: {children: React.ReactNode}) => children,
 }));
+jest.mock('../../../components/StatusBadge', () => ({
+  StatusBadge: ({status}: {status: string}) => {
+    const {View, Text} = require('react-native');
+    return (
+      <View testID={`mock-status-badge-${status}`}>
+        <Text>{status}</Text>
+      </View>
+    );
+  },
+}));
 jest.mock('../../../components', () => {
   const actual = jest.requireActual('../../../components');
   return {
@@ -74,11 +84,10 @@ describe('StaffReportDetailScreen', () => {
   });
 
   it('sends priority and assignee with the status payload', async () => {
-    const {getByTestId} = renderScreen();
+    const {findByTestId, getByTestId} = renderScreen();
 
-    await waitFor(() => {
-      expect(getByTestId('priority-option-High')).toBeTruthy();
-    });
+    await findByTestId('priority-option-High');
+    await findByTestId('staff-option-staff-1');
 
     fireEvent.press(getByTestId('priority-option-High'));
     fireEvent.press(getByTestId('staff-option-staff-1'));
