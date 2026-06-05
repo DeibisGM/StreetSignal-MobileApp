@@ -163,11 +163,7 @@ export default function StaffReportDetailScreen({route}: Props) {
             de tiempo.
           </Text>
 
-          <View style={styles.currentStatusRow}>
-            <Text style={styles.currentStatusLabel}>Estado actual</Text>
-            <StatusBadge status={report.status} />
-          </View>
-
+          <Text style={styles.selectorLabel}>Cambiar estado a</Text>
           <View style={styles.selectorGrid}>
             {REPORT_STATUSES.map(status => {
               const selected = selectedStatus === status;
@@ -265,16 +261,12 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: Colors.onSurfaceVariant,
   },
-  currentStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  currentStatusLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+  selectorLabel: {
+    fontSize: 12,
+    fontWeight: '700',
     color: Colors.onSurfaceVariant,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   selectorGrid: {
     flexDirection: 'row',

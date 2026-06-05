@@ -1,6 +1,8 @@
 import React from 'react';
-import {ActivityIndicator} from 'react-native';
 import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -12,18 +14,38 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import type {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {ArrowRight, Bell, ClipboardText, PlusCircle} from 'phosphor-react-native';
+import {
+  Bell,
+  ClipboardText,
+  Plus,
+} from 'phosphor-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import {ErrorMessage, ReportCard} from '../../../components';
+import {EmptyState, ErrorMessage, LogoMark, ReportCard} from '../../../components';
 import {reportsService} from '../../../api/reportsService';
 import {ApiError} from '../../../api/types';
 import {useAuth} from '../../../navigation/AuthContext';
 import {BorderRadius, Colors, Spacing} from '../../../theme';
+import {REPORT_STATUS_LABELS, STORAGE_KEYS} from '../../../constants';
 import type {AppTabParamList, HomeStackParamList} from '../../../navigation/types';
-import type {Report} from '../../../types';
+import type {Report, ReportStatus} from '../../../types';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 type TabNav = BottomTabNavigationProp<AppTabParamList>;
+
+const PAGE_SIZE = 10;
+
+type FilterOption = {label: string; value: ReportStatus | null};
+
+const FILTER_OPTIONS: FilterOption[] = [
+  {label: 'Todos', value: null},
+  {label: REPORT_STATUS_LABELS.Pending, value: 'Pending'},
+  {label: REPORT_STATUS_LABELS.InReview, value: 'InReview'},
+  {label: REPORT_STATUS_LABELS.Assigned, value: 'Assigned'},
+  {label: REPORT_STATUS_LABELS.InProgress, value: 'InProgress'},
+  {label: REPORT_STATUS_LABELS.Resolved, value: 'Resolved'},
+  {label: REPORT_STATUS_LABELS.Rejected, value: 'Rejected'},
+];
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -31,56 +53,156 @@ export default function HomeScreen() {
   const parentNavigation = navigation.getParent<TabNav>();
   const {user} = useAuth();
   const firstName = user?.fullName?.split(' ')[0] ?? 'ciudadano';
-  const [reports, setReports] = React.useState<Report[]>([]);
-  const [loadingReports, setLoadingReports] = React.useState(true);
-  const [reportsError, setReportsError] = React.useState<string | null>(null);
-  const mountedRef = React.useRef(false);
 
-  const goToCreate = () => parentNavigation?.navigate('CreateReport');
+  const [reports, setReports] = React.useState<Report[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [page, setPage] = React.useState(1);
+  const [hasMore, setHasMore] = React.useState(false);
+  const [statusFilter, setStatusFilter] = React.useState<ReportStatus | null>(null);
+
+  const mountedRef = React.useRef(false);
+  /**
+   * Tracks whether we ever had data on screen. Used to decide between
+   * "show full-page spinner" and "soft refresh" on focus — we don't
+   * want to blank the list every time the citizen comes back from
+   * CreateReport.
+   */
+  const hasDataRef = React.useRef(false);
+
+  const goToCreate = () => navigation.navigate('CreateReport');
   const goToNotifs = () => parentNavigation?.navigate('Notifications');
 
-  async function loadReports() {
-    setReportsError(null);
+  async function fetchPage(
+    pageNum: number,
+    filter: ReportStatus | null,
+    mode: 'initial' | 'refresh' | 'more' | 'focus' = 'initial',
+  ) {
+    if (!mountedRef.current) {
+      return;
+    }
+    setError(null);
     try {
-      const response = await reportsService.getMyReports();
-      if (mountedRef.current) {
-        setReports(response.items);
+      const response = await reportsService.getMyReports({
+        page: pageNum,
+        pageSize: PAGE_SIZE,
+        status: filter ?? undefined,
+      });
+      if (!mountedRef.current) {
+        return;
+      }
+      const newItems = response.items;
+      setReports(prev => (pageNum === 1 ? newItems : [...prev, ...newItems]));
+      setHasMore(response.page * response.pageSize < response.total);
+      setPage(pageNum);
+      if (newItems.length > 0) {
+        hasDataRef.current = true;
+      }
+      if (pageNum === 1 && mode !== 'refresh' && newItems.length > 0) {
+        AsyncStorage.setItem(
+          STORAGE_KEYS.CACHED_REPORTS,
+          JSON.stringify(newItems),
+        ).catch(() => {});
       }
     } catch (err) {
-      if (mountedRef.current) {
-        setReportsError(
-          err instanceof ApiError
-            ? err.message
-            : 'No se pudieron cargar tus reportes.',
-        );
+      if (!mountedRef.current) {
+        return;
       }
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : 'No se pudieron cargar tus reportes.',
+      );
     } finally {
-      if (mountedRef.current) {
-        setLoadingReports(false);
+      if (!mountedRef.current) {
+        return;
       }
+      setLoading(false);
+      setRefreshing(false);
+      setLoadingMore(false);
     }
   }
 
+  // Mount: hydrate cache → first fetch.
   React.useEffect(() => {
     mountedRef.current = true;
+    AsyncStorage.getItem(STORAGE_KEYS.CACHED_REPORTS)
+      .then(raw => {
+        if (raw && mountedRef.current) {
+          try {
+            const cached = JSON.parse(raw) as Report[];
+            if (cached.length > 0) {
+              setReports(cached);
+              hasDataRef.current = true;
+            }
+          } catch {
+            /* ignore corrupt cache */
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        fetchPage(1, null, 'initial').catch(() => {});
+      });
     return () => {
       mountedRef.current = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Focus: silently refresh the first page so a new report created in
+  // CreateReport shows up the moment the citizen returns. We don't
+  // touch the spinner — if we already have data, we keep showing it.
   useFocusEffect(
     React.useCallback(() => {
-      loadReports().catch(() => {});
-    }, []),
+      if (!hasDataRef.current) {
+        return;
+      }
+      fetchPage(1, statusFilter, 'focus').catch(() => {});
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [statusFilter]),
   );
+
+  function handleRefresh() {
+    setRefreshing(true);
+    fetchPage(1, statusFilter, 'refresh').catch(() => {});
+  }
+
+  function handleLoadMore() {
+    if (!hasMore || loadingMore || loading || refreshing) {
+      return;
+    }
+    setLoadingMore(true);
+    fetchPage(page + 1, statusFilter, 'more').catch(() => {});
+  }
+
+  function handleFilterChange(filter: ReportStatus | null) {
+    if (filter === statusFilter) {
+      return;
+    }
+    setStatusFilter(filter);
+    setLoading(true);
+    setReports([]);
+    fetchPage(1, filter, 'initial').catch(() => {});
+  }
+
+  const showFullPageLoading = loading && reports.length === 0;
+  const showFullPageError = !loading && !!error && reports.length === 0;
+  const showEmptyState = !loading && !error && reports.length === 0;
 
   return (
     <View style={styles.root} testID="home-screen">
       <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
 
-      <View style={[styles.hero, {paddingTop: insets.top + 16}]}>
+      {/* ── Hero header ───────────────────────────────────────────── */}
+      <View style={[styles.hero, {paddingTop: insets.top + 14}]}>
         <View style={styles.heroRow}>
-          <Text style={styles.heroName}>{firstName}</Text>
+          <View style={styles.heroNameRow}>
+            <LogoMark size={32} testID="home-hero-logo" />
+            <Text style={styles.heroName}>{firstName}</Text>
+          </View>
           <TouchableOpacity
             style={styles.notifBtn}
             onPress={goToNotifs}
@@ -91,76 +213,141 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[
-          styles.scrollContent,
-          {paddingBottom: insets.bottom + Spacing.stackXl},
-        ]}
-        showsVerticalScrollIndicator={false}>
-        <TouchableOpacity
-          style={styles.createCard}
-          onPress={goToCreate}
-          activeOpacity={0.88}
-          accessibilityRole="button"
-          accessibilityLabel="Crear nuevo reporte">
-          <View style={styles.createCardLeft}>
-            <View style={styles.createIconBg}>
-              <PlusCircle size={26} color="#fff" weight="fill" />
-            </View>
-            <View>
-              <Text style={styles.createCardTitle}>Nuevo reporte</Text>
-              <Text style={styles.createCardSub}>Foto · Categoría · Ubicación</Text>
-            </View>
-          </View>
-          <View style={styles.createArrow}>
-            <ArrowRight size={17} color="#fff" weight="bold" />
-          </View>
-        </TouchableOpacity>
+      {/* ── Status filter chips ──────────────────────────────────── */}
+      <View style={styles.chipsBar}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsRow}>
+          {FILTER_OPTIONS.map(opt => {
+            const isActive = statusFilter === opt.value;
+            return (
+              <TouchableOpacity
+                key={opt.value ?? 'all'}
+                style={[styles.chip, isActive && styles.chipActive]}
+                onPress={() => handleFilterChange(opt.value)}
+                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityState={{selected: isActive}}
+                testID={`home-status-chip-${opt.value ?? 'all'}`}>
+                <Text
+                  style={[styles.chipLabel, isActive && styles.chipLabelActive]}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Mis reportes</Text>
+      {/* ── Content area ─────────────────────────────────────────── */}
+      {showFullPageLoading ? (
+        <View style={styles.feedbackArea} testID="home-reports-loading">
+          <ActivityIndicator color={Colors.primary} size="small" />
+          <Text style={styles.feedbackText}>Cargando...</Text>
         </View>
-
-        {loadingReports ? (
-          <View style={styles.loadingBox} testID="home-reports-loading">
-            <ActivityIndicator color={Colors.primary} />
-            <Text style={styles.loadingText}>Cargando tus reportes...</Text>
-          </View>
-        ) : reportsError ? (
-          <View testID="home-reports-error">
-            <ErrorMessage message={reportsError} />
-          </View>
-        ) : reports.length ? (
-          reports.map(report => (
-            <ReportCard
-              key={report.id}
-              report={report}
-              onPress={() =>
-                navigation.navigate('ReportDetail', {reportId: report.id})
+      ) : showFullPageError ? (
+        <View style={styles.feedbackArea} testID="home-reports-error">
+          <ErrorMessage message={error!} />
+          <TouchableOpacity
+            style={styles.retryBtn}
+            onPress={() => fetchPage(1, statusFilter, 'initial').catch(() => {})}
+            activeOpacity={0.8}
+            accessibilityRole="button">
+            <Text style={styles.retryLabel}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      ) : showEmptyState ? (
+        <View style={styles.flex} testID="home-empty-state">
+          <View style={styles.emptyWrap}>
+            <EmptyState
+              Icon={ClipboardText}
+              title={
+                statusFilter
+                  ? REPORT_STATUS_LABELS[statusFilter] === 'Pendiente' &&
+                    statusFilter === 'Pending'
+                    ? 'Nada por aquí'
+                    : 'Sin resultados'
+                  : 'Aún no tienes reportes'
               }
-              testID={`home-report-card-${report.id}`}
+              subtitle={
+                statusFilter
+                  ? 'No tienes reportes con este estado.'
+                  : 'Crea tu primer reporte y aparecerá aquí con su estado actualizado.'
+              }
+              actionLabel={statusFilter ? undefined : 'Crear reporte'}
+              onAction={statusFilter ? undefined : goToCreate}
             />
-          ))
-        ) : (
-          <View style={styles.emptyCard} testID="home-empty-state">
-            <View style={styles.emptyIconWrap}>
-              <ClipboardText size={30} color={Colors.primary} weight="light" />
-            </View>
-            <Text style={styles.emptyTitle}>Aún no tienes reportes</Text>
-            <Text style={styles.emptySub}>
-              Cuando crees un reporte aparecerá aquí con su estado actualizado.
-            </Text>
-            <TouchableOpacity
-              style={styles.emptyBtn}
-              onPress={goToCreate}
-              activeOpacity={0.85}>
-              <PlusCircle size={15} color="#fff" weight="fill" />
-              <Text style={styles.emptyBtnText}>Crear mi primer reporte</Text>
-            </TouchableOpacity>
           </View>
-        )}
-      </ScrollView>
+        </View>
+      ) : (
+        <FlatList
+          data={reports}
+          keyExtractor={item => item.id}
+          renderItem={({item}) => (
+            <ReportCard
+              report={item}
+              onPress={() =>
+                navigation.navigate('ReportDetail', {reportId: item.id})
+              }
+              testID={`home-report-card-${item.id}`}
+            />
+          )}
+          ListHeaderComponent={
+            <View style={styles.listHeader}>
+              <View style={styles.listHeaderLeft}>
+                <Text style={styles.listHeaderTitle}>Reportes</Text>
+              </View>
+              <View
+                style={styles.listHeaderCount}
+                testID="home-reports-count"
+                accessibilityLabel={`${reports.length}${
+                  hasMore ? ' o más' : ''
+                } reportes`}>
+                <Text style={styles.listHeaderCountNumber}>
+                  {reports.length}
+                </Text>
+                {hasMore ? (
+                  <Text style={styles.listHeaderCountPlus}>+</Text>
+                ) : null}
+              </View>
+            </View>
+          }
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={styles.loadMoreRow}>
+                <ActivityIndicator size="small" color={Colors.primary} />
+              </View>
+            ) : null
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={Colors.primary}
+            />
+          }
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.6}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          initialNumToRender={10}
+          maxToRenderPerBatch={8}
+          windowSize={8}
+          testID="home-reports-list"
+        />
+      )}
+
+      {/* ── FAB ──────────────────────────────────────────────────────── */}
+      <TouchableOpacity
+        style={[styles.fab, {bottom: insets.bottom + 20}]}
+        onPress={goToCreate}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Crear nuevo reporte"
+        testID="home-fab">
+        <Plus size={22} color="#fff" weight="bold" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -170,22 +357,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  flex: {flex: 1},
+
+  /* Hero header */
   hero: {
     backgroundColor: Colors.primary,
     paddingHorizontal: Spacing.marginPage,
-    paddingBottom: Spacing.stackLg,
+    paddingBottom: 22,
   },
   heroRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  heroNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flexShrink: 1,
   },
   heroName: {
     fontSize: 26,
     fontWeight: '700',
     color: '#fff',
-    letterSpacing: -0.4,
-    marginTop: 3,
+    letterSpacing: -0.5,
   },
   notifBtn: {
     width: 40,
@@ -197,133 +392,142 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scroll: {
-    flex: 1,
+
+  /* Chips bar (status filter) */
+  chipsBar: {
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.outlineVariant,
   },
-  scrollContent: {
-    paddingTop: Spacing.stackLg,
+  chipsRow: {
+    flexDirection: 'row',
+    gap: 8,
     paddingHorizontal: Spacing.marginPage,
-    gap: Spacing.stackLg,
+    paddingVertical: 14,
   },
-  createCard: {
-    backgroundColor: '#fff',
-    borderRadius: BorderRadius.card,
-    paddingVertical: 18,
-    paddingHorizontal: 20,
+  chip: {
+    height: 34,
+    paddingHorizontal: 14,
+    borderRadius: 17,
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chipActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  chipLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: Colors.onSurfaceVariant,
+  },
+  chipLabelActive: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+
+  /* List section header */
+  listHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
+    paddingHorizontal: Spacing.marginPage,
+    paddingTop: 14,
+    paddingBottom: 18,
+    gap: 12,
   },
-  createCardLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
+  listHeaderLeft: {
     flex: 1,
+    minWidth: 0,
   },
-  createIconBg: {
-    width: 48,
-    height: 48,
-    borderRadius: BorderRadius.xl,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
+  listHeaderTitle: {
+    fontSize: 19,
+    fontWeight: '700',
+    color: Colors.onSurface,
+    letterSpacing: -0.3,
+  },
+  listHeaderCount: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    backgroundColor: Colors.primaryContainer,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    minWidth: 44,
     justifyContent: 'center',
   },
-  createCardTitle: {
+  listHeaderCountNumber: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: Colors.onPrimaryContainer,
+    letterSpacing: -0.3,
+    fontVariant: ['tabular-nums'],
+  },
+  listHeaderCountPlus: {
     fontSize: 15,
     fontWeight: '700',
-    color: Colors.onSurface,
-    letterSpacing: -0.2,
+    color: Colors.onPrimaryContainer,
+    marginLeft: 1,
   },
-  createCardSub: {
-    fontSize: 12,
-    color: Colors.onSurfaceVariant,
-    fontWeight: '500',
-    marginTop: 2,
+
+  /* List content padding */
+  listContent: {
+    paddingBottom: 96,
   },
-  createArrow: {
-    width: 34,
-    height: 34,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primary,
+
+  /* Load more spinner */
+  loadMoreRow: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+
+  /* Feedback states (loading / error) */
+  feedbackArea: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 12,
+    paddingHorizontal: Spacing.marginPage,
   },
-  sectionHeader: {
-    paddingTop: Spacing.stackSm,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.onSurface,
-    letterSpacing: -0.2,
-  },
-  loadingBox: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: BorderRadius.card,
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
-    paddingVertical: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  loadingText: {
+  feedbackText: {
     fontSize: 14,
     color: Colors.onSurfaceVariant,
   },
-  emptyCard: {
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: BorderRadius.card,
-    borderWidth: 1.5,
-    borderColor: Colors.outlineVariant,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    paddingVertical: 36,
-    paddingHorizontal: Spacing.marginPage,
-    gap: 8,
+  retryBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
   },
-  emptyIconWrap: {
-    width: 60,
-    height: 60,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primaryContainer,
+  retryLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+  },
+
+  /* Empty state */
+  emptyWrap: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+
+  /* FAB */
+  fab: {
+    position: 'absolute',
+    right: 20,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
-  },
-  emptyTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: Colors.onSurface,
-    letterSpacing: -0.2,
-  },
-  emptySub: {
-    fontSize: 13,
-    color: Colors.onSurfaceVariant,
-    textAlign: 'center',
-    lineHeight: 19,
-    maxWidth: 260,
-  },
-  emptyBtn: {
-    marginTop: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.full,
-  },
-  emptyBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#fff',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });

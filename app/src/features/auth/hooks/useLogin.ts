@@ -57,7 +57,12 @@ export function useLogin(onSuccess?: (user: User) => void) {
     setState(prev => {
       const next = {...prev.fieldErrors};
       delete next[field];
-      return {...prev, fieldErrors: next, error: null};
+      const hasFieldErrors = Object.keys(next).length > 0;
+      return {
+        ...prev,
+        fieldErrors: next,
+        error: hasFieldErrors ? prev.error : null,
+      };
     });
   }
 
@@ -65,7 +70,17 @@ export function useLogin(onSuccess?: (user: User) => void) {
     setState(prev => {
       const next = {...prev.fieldErrors};
       delete next.email;
-      return {...prev, email: value, fieldErrors: next, error: null};
+      // Only clear global error if there are no field-level errors left;
+      // this prevents the error message from vanishing when the user edits
+      // a field after a failed attempt — the global error stays visible until
+      // the next submission clears it.
+      const hasFieldErrors = Object.keys(next).length > 0;
+      return {
+        ...prev,
+        email: value,
+        fieldErrors: next,
+        error: hasFieldErrors ? prev.error : null,
+      };
     });
   }
 
@@ -73,7 +88,13 @@ export function useLogin(onSuccess?: (user: User) => void) {
     setState(prev => {
       const next = {...prev.fieldErrors};
       delete next.password;
-      return {...prev, password: value, fieldErrors: next, error: null};
+      const hasFieldErrors = Object.keys(next).length > 0;
+      return {
+        ...prev,
+        password: value,
+        fieldErrors: next,
+        error: hasFieldErrors ? prev.error : null,
+      };
     });
   }
 
