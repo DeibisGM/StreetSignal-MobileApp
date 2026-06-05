@@ -4,9 +4,9 @@ import {CategoryPicker} from '../CategoryPicker';
 import type {Category} from '../../types';
 
 const categories: Category[] = [
-  {id: 1, name: 'Vías', slug: 'vias', icon: '🛣️', isActive: true},
-  {id: 2, name: 'Alumbrado', slug: 'alumbrado', icon: '💡', isActive: true},
-  {id: 3, name: 'Acueducto', slug: 'acueducto', icon: '💧', isActive: true},
+  {id: '1', name: 'Vías', slug: 'vias', icon: '🛣️', isActive: true},
+  {id: '2', name: 'Alumbrado', slug: 'alumbrado', icon: '💡', isActive: true},
+  {id: '3', name: 'Acueducto', slug: 'acueducto', icon: '💧', isActive: true},
 ];
 
 describe('CategoryPicker', () => {
@@ -28,7 +28,7 @@ describe('CategoryPicker', () => {
       .create(
         <CategoryPicker
           categories={categories}
-          selectedId={2}
+          selectedId={'2'}
           onSelect={() => {}}
           label="Categoría"
         />,

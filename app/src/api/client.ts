@@ -78,10 +78,21 @@ async function request<T>(
 
       if (!response.ok) {
         const apiError = await toApiError(response);
+        if (__DEV__) {
+          console.warn(
+            `[API] ${String(options.method)} ${url} -> ${response.status} ${apiError.code}: ${apiError.message}`,
+          );
+        }
         if (response.status === 401) {
           sessionManager.notifyUnauthorized();
         }
         throw apiError;
+      }
+
+      if (__DEV__) {
+        console.log(
+          `[API] ${String(options.method)} ${url} -> ${response.status}`,
+        );
       }
 
       return (await response.json()) as T;

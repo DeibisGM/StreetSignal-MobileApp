@@ -3,6 +3,7 @@ import {NavigatorScreenParams} from '@react-navigation/native';
 // Auth stack ---------------------------------------------------------------
 
 export type AuthStackParamList = {
+  Splash: undefined;
   Login: undefined;
   Register: undefined;
 };
@@ -11,6 +12,7 @@ export type AuthStackParamList = {
 
 export type HomeStackParamList = {
   Home: undefined;
+  MyReports: undefined;
   ReportDetail: {reportId: string};
 };
 
@@ -28,7 +30,6 @@ export type AppTabParamList = {
   CreateReport: undefined;
   StaffTab: NavigatorScreenParams<StaffStackParamList>;
   Notifications: undefined;
-  Profile: undefined;
 };
 
 // Root navigator -----------------------------------------------------------

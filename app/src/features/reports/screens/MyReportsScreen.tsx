@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
@@ -15,12 +16,13 @@ import {ErrorMessage, ReportCard} from '../../../components';
 import {reportsService} from '../../../api/reportsService';
 import {ApiError} from '../../../api/types';
 import {Colors, Spacing} from '../../../theme';
-import {StaffStackParamList} from '../../../navigation/types';
+import {HomeStackParamList} from '../../../navigation/types';
 import type {Report} from '../../../types';
 
-type Nav = NativeStackNavigationProp<StaffStackParamList>;
+type Props = NativeStackScreenProps<HomeStackParamList, 'MyReports'>;
+type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
-export default function StaffReportsListScreen() {
+export default function MyReportsScreen(_props: Props) {
   const navigation = useNavigation<Nav>();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +37,7 @@ export default function StaffReportsListScreen() {
 
     setError(null);
     try {
-      const response = await reportsService.getReports({page: 1, pageSize: 50});
+      const response = await reportsService.getMyReports();
       if (mountedRef.current) {
         setReports(response.items);
       }
@@ -44,7 +46,7 @@ export default function StaffReportsListScreen() {
         setError(
           err instanceof ApiError
             ? err.message
-            : 'No se pudieron cargar los reportes.',
+            : 'No se pudieron cargar tus reportes.',
         );
       }
     } finally {
@@ -71,23 +73,23 @@ export default function StaffReportsListScreen() {
 
   if (loading && reports.length === 0) {
     return (
-      <View style={styles.center} testID="staff-reports-list-loading">
+      <View style={styles.center} testID="my-reports-loading">
         <ActivityIndicator color={Colors.primary} />
-        <Text style={styles.centerText}>Cargando reportes...</Text>
+        <Text style={styles.centerText}>Cargando tus reportes...</Text>
       </View>
     );
   }
 
   if (error && reports.length === 0) {
     return (
-      <View style={styles.center} testID="staff-reports-list-error">
+      <View style={styles.center} testID="my-reports-error">
         <ErrorMessage message={error} />
         <TouchableOpacity
           style={styles.retryButton}
           onPress={loadReports}
           activeOpacity={0.8}
           accessibilityRole="button"
-          accessibilityLabel="Reintentar carga de reportes">
+          accessibilityLabel="Reintentar carga de mis reportes">
           <Text style={styles.retryLabel}>Reintentar</Text>
         </TouchableOpacity>
       </View>
@@ -95,11 +97,11 @@ export default function StaffReportsListScreen() {
   }
 
   return (
-    <View style={styles.root} testID="staff-reports-list-screen">
+    <View style={styles.root} testID="my-reports-screen">
       <View style={styles.header}>
-        <Text style={styles.title}>Reportes</Text>
+        <Text style={styles.title}>Mis reportes</Text>
         <Text style={styles.subtitle}>
-          Toca un reporte para ver el detalle y actualizar su estado.
+          Revisa el estado actual y el historial de cada reporte.
         </Text>
       </View>
 
@@ -109,8 +111,8 @@ export default function StaffReportsListScreen() {
         renderItem={({item}) => (
           <ReportCard
             report={item}
-            onPress={() => navigation.navigate('StaffReportDetail', {reportId: item.id})}
-            testID={`staff-report-card-${item.id}`}
+            onPress={() => navigation.navigate('ReportDetail', {reportId: item.id})}
+            testID={`my-report-card-${item.id}`}
           />
         )}
         refreshControl={
@@ -126,9 +128,9 @@ export default function StaffReportsListScreen() {
         ]}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No hay reportes para mostrar.</Text>
+            <Text style={styles.emptyTitle}>Todavía no tienes reportes.</Text>
             <Text style={styles.emptyText}>
-              Cuando existan nuevos reportes, aparecerán aquí.
+              Cuando envíes uno, aparecerá aquí con su estado e historial.
             </Text>
           </View>
         }

@@ -1,4 +1,4 @@
-import {ReportStatus, ReportUpdateType} from '../types';
+import {ReportStatus} from '../types';
 
 export class ApiError extends Error {
   constructor(
@@ -34,7 +34,7 @@ export interface ImageAttachment {
 export interface CreateReportRequest {
   title: string;
   description: string;
-  categoryId: number;
+  categoryId: string;
   latitude: number;
   longitude: number;
   address?: string;
@@ -47,13 +47,13 @@ export interface UpdateReportRequest {
 }
 
 export interface UpdateReportStatusRequest {
-  status: ReportStatus;
+  newStatus: ReportStatus;
   message?: string;
 }
 
 export interface StaffReportFilters {
   status?: ReportStatus;
-  categoryId?: number;
+  categoryId?: string;
   search?: string;
   startDate?: string;
   endDate?: string;
@@ -63,9 +63,7 @@ export interface StaffReportFilters {
 
 // --- Report Update DTOs ---
 export interface CreateReportUpdateRequest {
-  updateType: ReportUpdateType;
   message: string;
-  newStatus?: ReportStatus;
 }
 
 // --- Notification DTOs ---

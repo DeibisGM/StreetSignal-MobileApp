@@ -17,25 +17,15 @@ Single HTTP client for all StreetSignal backend communication.
 
 ## Configuration
 
-Copy `.env.example` to `.env` and set `EXPO_PUBLIC_API_URL`:
+This app is plain React Native, not Expo. By default it uses the platform-aware
+dev URL defined in `src/constants/index.ts`:
 
-```
-EXPO_PUBLIC_API_URL=http://10.0.2.2:5000/api   # Android emulator
-EXPO_PUBLIC_API_URL=http://localhost:5000/api   # iOS simulator
-EXPO_PUBLIC_API_URL=https://api.streetsignal.example.com/api  # production
-```
+* Android emulator: `http://10.0.2.2:5000/api`
+* iOS simulator: `http://localhost:5000/api`
+* Web: `http://localhost:5000/api`
 
-To make Metro/Babel resolve `process.env.EXPO_PUBLIC_API_URL`, install `react-native-dotenv` and add it to `babel.config.js`:
-
-```js
-// babel.config.js
-module.exports = {
-  presets: ['module:@react-native/babel-preset'],
-  plugins: [
-    ['module:react-native-dotenv', {moduleName: '@env', path: '.env'}],
-  ],
-};
-```
+If you need a different backend host, change `API_BASE_URL` in
+`src/constants/index.ts`.
 
 ## Authentication
 

@@ -6,11 +6,10 @@ import {authService} from '../api/authService';
 import {AuthContext, AuthContextValue} from './AuthContext';
 import AuthNavigator from './AuthNavigator';
 import AppNavigator from './AppNavigator';
-import SplashScreen from '../features/auth/screens/SplashScreen';
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
-const SPLASH_TIMEOUT_MS = 3_000;
+const RESTORE_TIMEOUT_MS = 3_000;
 
 export default function RootNavigator() {
   const [status, setStatus] = useState<AuthStatus>('loading');
@@ -20,26 +19,28 @@ export default function RootNavigator() {
     let cancelled = false;
 
     const timeout = new Promise<null>(resolve =>
-      setTimeout(() => resolve(null), SPLASH_TIMEOUT_MS),
+      setTimeout(() => resolve(null), RESTORE_TIMEOUT_MS),
     );
 
     Promise.race([authService.restoreSession(), timeout])
       .then(result => {
         if (cancelled) return;
         if (result) {
+          sessionManager.setSession(result.token, result.user);
           setUser(result.user);
           setStatus('authenticated');
         } else {
-          sessionManager.clearSession();
-          storageService.clearSession().catch(() => {});
-          setStatus('unauthenticated');
+          // No stored session — only move to unauthenticated if login hasn't
+          // already updated the status (race: slow Keychain vs fast login).
+          setStatus(prev => (prev === 'loading' ? 'unauthenticated' : prev));
         }
       })
       .catch(() => {
         if (cancelled) return;
+        // Token was present but /auth/me rejected it — clear everything.
         sessionManager.clearSession();
         storageService.clearSession().catch(() => {});
-        setStatus('unauthenticated');
+        setStatus(prev => (prev === 'loading' ? 'unauthenticated' : prev));
       });
 
     return () => {
@@ -70,13 +71,9 @@ export default function RootNavigator() {
     logout,
   };
 
-  if (status === 'loading') {
-    return <SplashScreen />;
-  }
-
   return (
     <AuthContext.Provider value={contextValue}>
-      {status === 'authenticated' ? <AppNavigator /> : <AuthNavigator />}
+      {status === 'authenticated' ? <AppNavigator /> : <AuthNavigator initialLoading={status === 'loading'} />}
     </AuthContext.Provider>
   );
 }

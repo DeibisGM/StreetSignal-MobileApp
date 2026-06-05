@@ -28,18 +28,17 @@ export const authService = {
 
   me: (): Promise<User> => apiClient.get<User>(ENDPOINTS.auth.me),
 
-  // Validates the stored token against GET /auth/me.
-  // Returns the fresh session on success, null if no token is stored.
-  // Throws on API error (expired, invalid, network failure) — caller handles cleanup.
+  // Restores the stored session without calling /auth/me.
+  // Trusting the stored token avoids the race condition where a background
+  // /auth/me returning 401 (expired old token) triggers logout while the
+  // user is already authenticated with a fresh token.
+  // If the token IS expired, the first protected API call will return 401
+  // and notifyUnauthorized → logout handles it naturally.
   restoreSession: async (): Promise<{token: string; user: User} | null> => {
     const session = await storageService.loadSession();
-    console.log('[restoreSession] session from storage:', session ? 'found' : 'null');
     if (!session) return null;
     sessionManager.setSession(session.token, session.user);
-    const user = await apiClient.get<User>(ENDPOINTS.auth.me);
-    sessionManager.setSession(session.token, user);
-    storageService.saveSession(session.token, user).catch(() => {});
-    return {token: session.token, user};
+    return session;
   },
 
   logout: (): void => {

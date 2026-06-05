@@ -17,18 +17,18 @@ import {UpdateTimelineItem} from '../UpdateTimelineItem';
 import type {Category, Report, ReportUpdate} from '../../types';
 
 const CATEGORIES: Category[] = [
-  {id: 1, name: 'Vías', slug: 'vias', icon: '🛣️', isActive: true},
-  {id: 2, name: 'Alumbrado', slug: 'alumbrado', icon: '💡', isActive: true},
-  {id: 3, name: 'Acueducto', slug: 'acueducto', icon: '💧', isActive: true},
-  {id: 4, name: 'Parques', slug: 'parques', icon: '🌳', isActive: true},
-  {id: 5, name: 'Basuras', slug: 'basuras', icon: '🗑️', isActive: true},
+  {id: '1', name: 'Vías', slug: 'vias', icon: '🛣️', isActive: true},
+  {id: '2', name: 'Alumbrado', slug: 'alumbrado', icon: '💡', isActive: true},
+  {id: '3', name: 'Acueducto', slug: 'acueducto', icon: '💧', isActive: true},
+  {id: '4', name: 'Parques', slug: 'parques', icon: '🌳', isActive: true},
+  {id: '5', name: 'Basuras', slug: 'basuras', icon: '🗑️', isActive: true},
 ];
 
 const SAMPLE_REPORT: Report = {
   id: '1',
   title: 'Bache profundo en Av. 7a con Calle 45',
   description: 'Bache de 30 cm.',
-  categoryId: 1,
+  categoryId: '1',
   category: 'Vías',
   status: 'InProgress',
   latitude: 4.624,
@@ -54,7 +54,7 @@ const STATUS_CHANGE: ReportUpdate = {
 const ALL_STATUSES = ['Pending','InReview','Assigned','InProgress','Resolved','Rejected'] as const;
 
 export function ComponentsDemo() {
-  const [selectedCat, setSelectedCat] = useState<number | null>(1);
+  const [selectedCat, setSelectedCat] = useState<string | null>('1');
   const [text, setText] = useState('');
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

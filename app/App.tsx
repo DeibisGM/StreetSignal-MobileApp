@@ -6,6 +6,7 @@ import {RootNavigator} from './src/navigation';
 import {RootParamList} from './src/navigation/types';
 import {ComponentsDemo} from './src/components/__demo__/ComponentsDemo';
 
+// Set to true to preview the design-system component library
 const SHOW_COMPONENTS_DEMO = false;
 
 const linking: LinkingOptions<RootParamList> = {

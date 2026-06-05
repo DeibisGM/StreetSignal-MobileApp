@@ -17,6 +17,7 @@ jest.mock('../../storage', () => ({
 
 jest.mock('../../api/sessionManager', () => ({
   sessionManager: {
+    setSession: jest.fn(),
     clearSession: jest.fn(),
     setUnauthorizedHandler: jest.fn(),
   },
@@ -32,6 +33,8 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
+// AuthNavigator hosts the Splash + Login. We mock it to a single testID so we
+// can assert "auth flow is showing" (covers both loading and unauthenticated).
 jest.mock('../AuthNavigator', () => {
   const {View} = require('react-native');
   return function MockAuthNavigator() {
@@ -74,18 +77,19 @@ describe('RootNavigator', () => {
     jest.clearAllMocks();
   });
 
-  it('shows SplashScreen while session is being restored', () => {
+  it('shows the auth flow while session is being restored', () => {
     mockRestoreSession.mockReturnValue(new Promise(() => {}));
     const {getByTestId} = renderRoot();
-    expect(getByTestId('splash-screen')).toBeTruthy();
+    expect(getByTestId('auth-navigator')).toBeTruthy();
   });
 
-  it('renders AppNavigator when restoreSession succeeds', async () => {
+  it('renders AppNavigator and sets the session when restoreSession succeeds', async () => {
     mockRestoreSession.mockResolvedValue({token: 'tok_123', user: mockUser});
     const {getByTestId} = renderRoot();
     await waitFor(() => {
       expect(getByTestId('app-navigator')).toBeTruthy();
     });
+    expect(sessionManager.setSession).toHaveBeenCalledWith('tok_123', mockUser);
   });
 
   it('renders AuthNavigator when there is no stored session', async () => {
@@ -94,8 +98,8 @@ describe('RootNavigator', () => {
     await waitFor(() => {
       expect(getByTestId('auth-navigator')).toBeTruthy();
     });
-    expect(sessionManager.clearSession).toHaveBeenCalled();
-    expect(storageService.clearSession).toHaveBeenCalled();
+    // Nothing stored — no need to wipe storage.
+    expect(sessionManager.clearSession).not.toHaveBeenCalled();
   });
 
   it('clears session and renders AuthNavigator when restoreSession rejects', async () => {
@@ -108,12 +112,12 @@ describe('RootNavigator', () => {
     expect(storageService.clearSession).toHaveBeenCalled();
   });
 
-  it('renders AuthNavigator after 3s timeout when restoreSession hangs', async () => {
+  it('falls back to AuthNavigator after the 3s timeout when restoreSession hangs', async () => {
     jest.useFakeTimers();
     mockRestoreSession.mockReturnValue(new Promise(() => {}));
 
     const {getByTestId} = renderRoot();
-    expect(getByTestId('splash-screen')).toBeTruthy();
+    expect(getByTestId('auth-navigator')).toBeTruthy();
 
     await act(async () => {
       jest.advanceTimersByTime(3_000);

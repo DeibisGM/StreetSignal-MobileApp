@@ -1,7 +1,9 @@
 import {useRef, useState} from 'react';
-import {authService} from '../../../api/authService';
+import {authService} from '../../../services/auth/authService';
+import {storageService} from '../../../storage'; // Keychain-backed — same store restoreSession reads from
+import {sessionManager} from '../../../api/sessionManager';
 import {isValidEmail} from '../../../utils';
-import {useAuth} from '../../../navigation/AuthContext';
+import type {User} from '../../../types';
 
 interface FieldErrors {
   email?: string;
@@ -14,7 +16,6 @@ interface State {
   showPassword: boolean;
   loading: boolean;
   error: string | null;
-  success: boolean;
   fieldErrors: FieldErrors;
 }
 
@@ -24,7 +25,6 @@ const INITIAL: State = {
   showPassword: false,
   loading: false,
   error: null,
-  success: false,
   fieldErrors: {},
 };
 
@@ -49,8 +49,7 @@ function getErrorMessage(err: unknown): string {
   return 'Ocurrió un error inesperado. Intenta de nuevo.';
 }
 
-export function useLogin() {
-  const {login} = useAuth();
+export function useLogin(onSuccess?: (user: User) => void) {
   const [state, setState] = useState<State>(INITIAL);
   const submitting = useRef(false);
 
@@ -105,15 +104,17 @@ export function useLogin() {
     }
 
     submitting.current = true;
-    setState(prev => ({...prev, loading: true, error: null, success: false}));
+    setState(prev => ({...prev, loading: true, error: null}));
 
     try {
       const response = await authService.login({
         email: state.email.trim().toLowerCase(),
         password: state.password,
       });
-      setState(prev => ({...prev, loading: false, success: true}));
-      login(response.user);
+      sessionManager.setSession(response.token, response.user);
+      storageService.saveSession(response.token, response.user).catch(() => {});
+      setState(prev => ({...prev, loading: false}));
+      onSuccess?.(response.user);
     } catch (err: unknown) {
       setState(prev => ({
         ...prev,
@@ -131,7 +132,6 @@ export function useLogin() {
     showPassword: state.showPassword,
     loading: state.loading,
     error: state.error,
-    success: state.success,
     fieldErrors: state.fieldErrors,
     setEmail,
     setPassword,
