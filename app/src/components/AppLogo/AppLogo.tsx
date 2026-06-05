@@ -7,27 +7,39 @@ const LOGO_DARK = require('../../assets/images/logo-dark.png');
 
 interface AppLogoProps {
   size?: number;
-  /** 'light' = white logo on primary blue bg (default). 'dark' = dark logo on white bg. */
+  /** 'light' = white logo on primary blue bg. 'dark' = dark logo on white bg. */
   variant?: 'light' | 'dark';
   testID?: string;
 }
 
 export function AppLogo({size = 64, variant = 'light', testID}: AppLogoProps) {
-  const radius = Math.round(size * 0.28);
   const imageSize = Math.round(size * 0.68);
+
+  if (variant === 'light') {
+    // Plain white icon — no blue box on top of blue header.
+    return (
+      <View
+        testID={testID ?? 'app-logo'}
+        accessibilityLabel="StreetSignal logo"
+        accessibilityRole="image"
+        style={[styles.iconWrap, {width: size, height: size}]}>
+        <Image
+          source={LOGO_WHITE}
+          style={{width: imageSize, height: imageSize}}
+          resizeMode="contain"
+        />
+      </View>
+    );
+  }
 
   return (
     <View
       testID={testID ?? 'app-logo'}
       accessibilityLabel="StreetSignal logo"
       accessibilityRole="image"
-      style={[
-        styles.container,
-        variant === 'dark' && styles.containerDark,
-        {width: size, height: size, borderRadius: radius},
-      ]}>
+      style={[styles.containerDark, {width: size, height: size}]}>
       <Image
-        source={variant === 'light' ? LOGO_WHITE : LOGO_DARK}
+        source={LOGO_DARK}
         style={{width: imageSize, height: imageSize}}
         resizeMode="contain"
       />
@@ -36,14 +48,16 @@ export function AppLogo({size = 64, variant = 'light', testID}: AppLogoProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.primary,
+  iconWrap: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   containerDark: {
     backgroundColor: Colors.surfaceContainerLowest,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: Colors.outlineVariant,
+    borderRadius: 12,
   },
 });

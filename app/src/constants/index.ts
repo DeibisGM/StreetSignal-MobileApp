@@ -2,6 +2,8 @@
 
 function getDevApiBaseUrl(): string {
   if (Platform.OS === 'android') {
+    // Physical device on LAN — use your PC's LAN IP.
+    // Update this if your router/dhcp changes the IP.
     return 'http://192.168.0.213:5000/api';
   }
 
@@ -9,7 +11,7 @@ function getDevApiBaseUrl(): string {
     return 'http://localhost:5000/api';
   }
 
-  return 'http://192.168.0.213:5000/api';
+  return 'http://localhost:5000/api';
 }
 
 // Bare React Native does not inject Expo-style env vars by default.

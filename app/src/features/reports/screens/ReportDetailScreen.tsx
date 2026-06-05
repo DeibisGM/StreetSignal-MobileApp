@@ -221,17 +221,7 @@ export default function ReportDetailScreen({route, navigation}: Props) {
 
   return (
     <View style={styles.root} testID="report-detail-screen">
-      <ReportDetailView
-        report={report}
-        offline={offline}
-        onBack={() => {
-          if (navigation.canGoBack()) {
-            navigation.goBack();
-          } else {
-            goHome();
-          }
-        }}
-      />
+      <ReportDetailView report={report} offline={offline} />
     </View>
   );
 }

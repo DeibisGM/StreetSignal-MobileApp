@@ -250,4 +250,66 @@ describe('HomeScreen', () => {
     // The cached item should be on screen even though the API is still pending.
     expect(getByTestId('home-report-card-cached-1')).toBeTruthy();
   });
+
+  // ── Hero / listHeader polish ────────────────────────────────────────
+
+  it('renders the white LogoMark next to the user name in the hero', async () => {
+    mockGetMyReports.mockResolvedValue({items: [], page: 1, pageSize: 10, total: 0});
+
+    const {getByTestId, getByText} = renderHomeScreen();
+
+    await act(async () => {
+      await new Promise<void>(resolve => setImmediate(resolve));
+    });
+
+    expect(getByTestId('home-hero-logo')).toBeTruthy();
+    // The greeting uses the first name.
+    expect(getByText('Ana')).toBeTruthy();
+  });
+
+  it('shows the count badge in the "Reportes" list header', async () => {
+    mockGetMyReports.mockResolvedValue({
+      items: [
+        {
+          id: 'r1',
+          title: 'Bache',
+          description: '',
+          category: 'Infraestructura',
+          categoryId: 'cat-1',
+          status: 'Pending',
+          latitude: null,
+          longitude: null,
+          createdById: 'u1',
+          createdByName: 'Ana',
+          createdAt: '2025-01-01T00:00:00Z',
+        },
+        {
+          id: 'r2',
+          title: 'Alumbrado',
+          description: '',
+          category: 'Servicios',
+          categoryId: 'cat-2',
+          status: 'Resolved',
+          latitude: null,
+          longitude: null,
+          createdById: 'u1',
+          createdByName: 'Ana',
+          createdAt: '2025-02-01T00:00:00Z',
+        },
+      ],
+      page: 1,
+      pageSize: 10,
+      total: 2,
+    });
+
+    const {getByTestId, getByText} = renderHomeScreen();
+
+    await act(async () => {
+      await new Promise<void>(resolve => setImmediate(resolve));
+    });
+
+    expect(getByTestId('home-reports-count')).toBeTruthy();
+    expect(getByText('2')).toBeTruthy();
+    expect(getByText('Reportes')).toBeTruthy();
+  });
 });

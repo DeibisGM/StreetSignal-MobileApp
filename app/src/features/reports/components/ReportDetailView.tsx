@@ -1,10 +1,10 @@
 import React from 'react';
-import {Image, ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {ArrowLeft, ImageBroken, MapPin, WifiSlash} from 'phosphor-react-native';
+import {Image, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {ImageBroken, MapPin, WifiSlash} from 'phosphor-react-native';
 
 import {StatusBadge, UpdateTimelineItem} from '../../../components';
 import {Colors, BorderRadius, Spacing} from '../../../theme';
-import {formatDate, statusLabel} from '../../../utils';
+import {formatDate} from '../../../utils';
 import type {Report} from '../../../types';
 
 interface ReportDetailViewProps {
@@ -17,13 +17,6 @@ interface ReportDetailViewProps {
    * they know the data might be stale.
    */
   offline?: boolean;
-  /**
-   * If provided, a floating "Volver" button is rendered on top of the
-   * hero image. Wired to the parent's `navigation.goBack` (or whatever
-   * the parent considers "back").
-   */
-  onBack?: () => void;
-  testIDBackButton?: string;
   testIDOfflineBanner?: string;
 }
 
@@ -32,8 +25,6 @@ export function ReportDetailView({
   children,
   testID,
   offline = false,
-  onBack,
-  testIDBackButton,
   testIDOfflineBanner,
 }: ReportDetailViewProps) {
   const [imgError, setImgError] = React.useState(false);
@@ -61,6 +52,7 @@ export function ReportDetailView({
         showsVerticalScrollIndicator={false}
         testID={testID ?? 'report-detail-view'}>
         <View style={styles.card}>
+          {/* Hero image — status chip floats in the upper-right corner */}
           <View style={styles.imageWrap}>
             {showImage ? (
               <Image
@@ -79,31 +71,25 @@ export function ReportDetailView({
               </View>
             )}
 
-            {onBack ? (
-              <TouchableOpacity
-                style={styles.backBtn}
-                onPress={onBack}
-                activeOpacity={0.75}
-                accessibilityRole="button"
-                accessibilityLabel="Volver"
-                testID={testIDBackButton ?? 'report-detail-back-button'}>
-                <ArrowLeft size={18} color="#fff" weight="bold" />
-              </TouchableOpacity>
-            ) : null}
+            {/* Status chip — small, anchored top-right over the image */}
+            <View style={styles.statusOverlay} pointerEvents="none">
+              <StatusBadge status={report.status} size="prominent" />
+            </View>
           </View>
 
           <View style={styles.cardBody}>
-            <View style={styles.metaRow}>
-              <Text style={styles.category}>{report.category}</Text>
-              <StatusBadge status={report.status} />
-            </View>
+            {/* Category label */}
+            <Text style={styles.category}>{report.category}</Text>
 
+            {/* Title */}
             <Text style={styles.title}>{report.title}</Text>
-            <Text style={styles.meta}>
-              Reporte creado por {report.createdByName}
-            </Text>
-            <Text style={styles.meta}>{formatDate(report.createdAt)}</Text>
 
+            {/* Meta: author + date */}
+            <Text style={styles.meta}>
+              Reporte creado por {report.createdByName} · {formatDate(report.createdAt)}
+            </Text>
+
+            {/* Location */}
             {report.address ? (
               <View style={styles.addressRow}>
                 <MapPin size={13} color={Colors.onSurfaceVariant} weight="fill" />
@@ -111,16 +97,14 @@ export function ReportDetailView({
               </View>
             ) : null}
 
-            {report.latitude !== null && report.longitude !== null ? (
+            {report.latitude !== null && report.longitude !== null && !report.address ? (
               <Text style={styles.coords}>
                 {report.latitude.toFixed(5)}, {report.longitude.toFixed(5)}
               </Text>
             ) : null}
 
+            {/* Description */}
             <Text style={styles.description}>{report.description}</Text>
-            <Text style={styles.statusHint}>
-              Estado actual: {statusLabel(report.status)}
-            </Text>
           </View>
         </View>
 
@@ -207,31 +191,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.onSurfaceVariant,
   },
-  backBtn: {
+  statusOverlay: {
     position: 'absolute',
-    top: 12,
-    left: 12,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.35)',
+    top: 10,
+    right: 10,
   },
   cardBody: {
-    padding: Spacing.gutter,
-    gap: 8,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.gutter,
+    paddingTop: Spacing.gutter,
+    paddingBottom: Spacing.gutter + 2,
     gap: 12,
   },
   category: {
-    flex: 1,
     fontSize: 10,
     fontWeight: '700',
     color: Colors.primary,
@@ -269,10 +240,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: Colors.onSurface,
-  },
-  statusHint: {
-    fontSize: 12,
-    color: Colors.onSurfaceVariant,
+    marginTop: 2,
   },
   panelSlot: {
     marginTop: Spacing.stackLg,

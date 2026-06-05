@@ -62,7 +62,7 @@ export function LoginScreen({successMessage, onDismissSuccess}: Props) {
 
           {/* Header */}
           <View style={styles.header}>
-            <AppLogo size={68} />
+            <AppLogo size={52} />
             <Text style={styles.appName}>StreetSignal</Text>
             <Text style={styles.tagline}>Plataforma de Reportes Ciudadanos</Text>
           </View>

@@ -259,20 +259,4 @@ describe('ReportDetailScreen', () => {
       expect.stringContaining('"id":"r1"'),
     );
   });
-
-  // ── Back button ───────────────────────────────────────────────────────
-
-  it('exposes a "Volver" button that calls navigation.goBack', async () => {
-    const goBack = jest.fn();
-    mockGetReport.mockResolvedValueOnce({...baseReport});
-
-    const {getByTestId} = renderDetail({goBack});
-
-    await act(async () => {
-      await new Promise<void>(resolve => setImmediate(resolve));
-    });
-
-    fireEvent.press(getByTestId('report-detail-back-button'));
-    expect(goBack).toHaveBeenCalledTimes(1);
-  });
 });

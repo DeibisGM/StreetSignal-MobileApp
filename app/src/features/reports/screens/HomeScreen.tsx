@@ -21,7 +21,7 @@ import {
 } from 'phosphor-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import {EmptyState, ErrorMessage, ReportCard} from '../../../components';
+import {EmptyState, ErrorMessage, LogoMark, ReportCard} from '../../../components';
 import {reportsService} from '../../../api/reportsService';
 import {ApiError} from '../../../api/types';
 import {useAuth} from '../../../navigation/AuthContext';
@@ -72,7 +72,7 @@ export default function HomeScreen() {
    */
   const hasDataRef = React.useRef(false);
 
-  const goToCreate = () => parentNavigation?.navigate('CreateReport');
+  const goToCreate = () => navigation.navigate('CreateReport');
   const goToNotifs = () => parentNavigation?.navigate('Notifications');
 
   async function fetchPage(
@@ -199,7 +199,10 @@ export default function HomeScreen() {
       {/* ── Hero header ───────────────────────────────────────────── */}
       <View style={[styles.hero, {paddingTop: insets.top + 14}]}>
         <View style={styles.heroRow}>
-          <Text style={styles.heroName}>{firstName}</Text>
+          <View style={styles.heroNameRow}>
+            <LogoMark size={32} testID="home-hero-logo" />
+            <Text style={styles.heroName}>{firstName}</Text>
+          </View>
           <TouchableOpacity
             style={styles.notifBtn}
             onPress={goToNotifs}
@@ -292,12 +295,21 @@ export default function HomeScreen() {
           )}
           ListHeaderComponent={
             <View style={styles.listHeader}>
-              <Text style={styles.listHeaderTitle}>Reportes</Text>
-              <View style={styles.listHeaderCount}>
-                <Text style={styles.listHeaderCountText}>
+              <View style={styles.listHeaderLeft}>
+                <Text style={styles.listHeaderTitle}>Reportes</Text>
+              </View>
+              <View
+                style={styles.listHeaderCount}
+                testID="home-reports-count"
+                accessibilityLabel={`${reports.length}${
+                  hasMore ? ' o más' : ''
+                } reportes`}>
+                <Text style={styles.listHeaderCountNumber}>
                   {reports.length}
-                  {hasMore ? '+' : ''}
                 </Text>
+                {hasMore ? (
+                  <Text style={styles.listHeaderCountPlus}>+</Text>
+                ) : null}
               </View>
             </View>
           }
@@ -358,6 +370,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  heroNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flexShrink: 1,
+  },
   heroName: {
     fontSize: 26,
     fontWeight: '700',
@@ -417,24 +435,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.marginPage,
-    paddingTop: Spacing.stackLg,
-    paddingBottom: 10,
+    paddingTop: 14,
+    paddingBottom: 18,
+    gap: 12,
+  },
+  listHeaderLeft: {
+    flex: 1,
+    minWidth: 0,
   },
   listHeaderTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 19,
+    fontWeight: '700',
     color: Colors.onSurface,
+    letterSpacing: -0.3,
   },
   listHeaderCount: {
-    backgroundColor: Colors.surfaceContainerHigh,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    backgroundColor: Colors.primaryContainer,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    minWidth: 44,
+    justifyContent: 'center',
   },
-  listHeaderCountText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.onSurfaceVariant,
+  listHeaderCountNumber: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: Colors.onPrimaryContainer,
+    letterSpacing: -0.3,
+    fontVariant: ['tabular-nums'],
+  },
+  listHeaderCountPlus: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.onPrimaryContainer,
+    marginLeft: 1,
   },
 
   /* List content padding */
