@@ -27,6 +27,7 @@ export interface Category {
   icon?: string;
   color?: string;
   isActive: boolean;
+  sortOrder?: number;
 }
 
 export interface ReportImage {

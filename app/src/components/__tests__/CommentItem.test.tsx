@@ -1,5 +1,6 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
+import {act} from 'react-test-renderer';
 import {CommentItem} from '../CommentItem';
 import type {ReportUpdate} from '../../types';
 
@@ -16,13 +17,19 @@ const mockUpdate: ReportUpdate = {
 
 describe('CommentItem', () => {
   it('renders citizen comment', () => {
-    const tree = renderer.create(<CommentItem update={mockUpdate} />).toJSON();
+    let tree;
+    act(() => {
+      tree = renderer.create(<CommentItem update={mockUpdate} />).toJSON();
+    });
     expect(tree).toMatchSnapshot();
   });
 
   it('renders official comment', () => {
     const official: ReportUpdate = {...mockUpdate, isOfficial: true};
-    const tree = renderer.create(<CommentItem update={official} />).toJSON();
+    let tree;
+    act(() => {
+      tree = renderer.create(<CommentItem update={official} />).toJSON();
+    });
     expect(tree).toMatchSnapshot();
   });
 });

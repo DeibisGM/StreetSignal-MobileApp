@@ -12,13 +12,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {ErrorMessage} from '../../../components/auth/ErrorMessage';
 import {LoadingButton} from '../../../components/auth/LoadingButton';
 import {useRegister, type PasswordStrength} from '../hooks/useRegister';
+import type {AuthStackParamList} from '../../../navigation/types';
 
-interface Props {
-  onNavigateToLogin?: (message?: string) => void;
-}
+type Nav = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
 
 const STRENGTH_CONFIG: Record<
   PasswordStrength,
@@ -30,7 +31,8 @@ const STRENGTH_CONFIG: Record<
   strong: {label: 'Fuerte', color: '#4CAF50', bars: 3},
 };
 
-export function RegisterScreen({onNavigateToLogin}: Props) {
+export function RegisterScreen() {
+  const navigation = useNavigation<Nav>();
   const {
     fullName,
     email,
@@ -54,9 +56,9 @@ export function RegisterScreen({onNavigateToLogin}: Props) {
 
   useEffect(() => {
     if (success) {
-      onNavigateToLogin?.('Cuenta creada correctamente. Ya puedes iniciar sesion.');
+      navigation.navigate('Login');
     }
-  }, [success, onNavigateToLogin]);
+  }, [success, navigation]);
 
   const strength = STRENGTH_CONFIG[passwordStrength];
   const strengthLabelStyle = {color: strength.color};
@@ -275,7 +277,7 @@ export function RegisterScreen({onNavigateToLogin}: Props) {
             {/* Login link */}
             <View style={styles.loginRow}>
               <Text style={styles.loginText}>Ya tienes cuenta? </Text>
-              <TouchableOpacity onPress={() => onNavigateToLogin?.()} testID="go-to-login">
+              <TouchableOpacity onPress={() => navigation.navigate('Login')} testID="go-to-login">
                 <Text style={styles.loginLink}>Inicia sesion</Text>
               </TouchableOpacity>
             </View>

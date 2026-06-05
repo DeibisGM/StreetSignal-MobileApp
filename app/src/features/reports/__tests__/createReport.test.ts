@@ -3,7 +3,7 @@ import {apiClient} from '../../../api/client';
 
 jest.mock('../../../api/client');
 
-const mockedPostForm = apiClient.postForm as jest.Mock;
+const mockedPost = apiClient.post as jest.Mock;
 
 const REPORT_RESPONSE = {
   id: 'report-1',
@@ -25,10 +25,8 @@ describe('reportsService.createReport', () => {
     jest.clearAllMocks();
   });
 
-  it('calls postForm /reports and appends the expected text fields', async () => {
-    mockedPostForm.mockResolvedValueOnce(REPORT_RESPONSE);
-
-    const appendSpy = jest.spyOn(FormData.prototype, 'append');
+  it('calls POST /reports with JSON body and all fields', async () => {
+    mockedPost.mockResolvedValueOnce(REPORT_RESPONSE);
 
     await reportsService.createReport({
       title: 'Bache en la acera',
@@ -37,31 +35,40 @@ describe('reportsService.createReport', () => {
       latitude: 9.9281,
       longitude: -84.0907,
       address: 'San José, CR',
-      images: [
-        {uri: 'file://photo.jpg', name: 'photo.jpg', type: 'image/jpeg'},
-      ],
+      imageUrl: 'https://example.com/photo.jpg',
     });
 
-    expect(mockedPostForm).toHaveBeenCalledTimes(1);
-    expect(mockedPostForm.mock.calls[0][0]).toBe('/reports');
+    expect(mockedPost).toHaveBeenCalledTimes(1);
+    expect(mockedPost.mock.calls[0][0]).toBe('/reports');
 
-    expect(appendSpy).toHaveBeenCalledWith('title', 'Bache en la acera');
-    expect(appendSpy).toHaveBeenCalledWith(
-      'description',
-      'Hay un bache grande en la acera principal',
-    );
-    expect(appendSpy).toHaveBeenCalledWith('categoryId', 'cat-guid-2');
-    expect(appendSpy).toHaveBeenCalledWith('latitude', '9.9281');
-    expect(appendSpy).toHaveBeenCalledWith('longitude', '-84.0907');
-    expect(appendSpy).toHaveBeenCalledWith('address', 'San José, CR');
-
-    appendSpy.mockRestore();
+    const body = mockedPost.mock.calls[0][1];
+    expect(body.title).toBe('Bache en la acera');
+    expect(body.description).toBe('Hay un bache grande en la acera principal');
+    expect(body.categoryId).toBe('cat-guid-2');
+    expect(body.latitude).toBe(9.9281);
+    expect(body.longitude).toBe(-84.0907);
+    expect(body.address).toBe('San José, CR');
+    expect(body.imageUrl).toBe('https://example.com/photo.jpg');
   });
 
-  it('omits address field when not provided', async () => {
-    mockedPostForm.mockResolvedValueOnce(REPORT_RESPONSE);
+  it('omits optional fields when not provided', async () => {
+    mockedPost.mockResolvedValueOnce(REPORT_RESPONSE);
 
-    const appendSpy = jest.spyOn(FormData.prototype, 'append');
+    await reportsService.createReport({
+      title: 'Bache en la acera',
+      description: 'Hay un bache grande en la acera principal',
+      categoryId: 'cat-guid-2',
+      latitude: null,
+      longitude: null,
+    });
+
+    const body = mockedPost.mock.calls[0][1];
+    expect(body.address).toBeNull();
+    expect(body.imageUrl).toBeNull();
+  });
+
+  it('sends a JSON request (post, not postForm)', async () => {
+    mockedPost.mockResolvedValueOnce(REPORT_RESPONSE);
 
     await reportsService.createReport({
       title: 'Bache en la acera',
@@ -71,30 +78,13 @@ describe('reportsService.createReport', () => {
       longitude: -84.0907,
     });
 
-    const appendedKeys = appendSpy.mock.calls.map(([key]) => key);
-    expect(appendedKeys).not.toContain('address');
-
-    appendSpy.mockRestore();
-  });
-
-  it('sends a multipart/form-data request (postForm, not post)', async () => {
-    mockedPostForm.mockResolvedValueOnce(REPORT_RESPONSE);
-
-    await reportsService.createReport({
-      title: 'Bache en la acera',
-      description: 'Hay un bache grande en la acera principal',
-      categoryId: 'cat-guid-2',
-      latitude: 9.9281,
-      longitude: -84.0907,
-    });
-
-    expect(mockedPostForm).toHaveBeenCalledTimes(1);
-    expect(apiClient.post).not.toHaveBeenCalled();
+    expect(mockedPost).toHaveBeenCalledTimes(1);
+    expect(apiClient.postForm).not.toHaveBeenCalled();
   });
 
   it('propagates API errors to the caller', async () => {
     const apiError = new Error('HTTP 400 Bad Request');
-    mockedPostForm.mockRejectedValueOnce(apiError);
+    mockedPost.mockRejectedValueOnce(apiError);
 
     await expect(
       reportsService.createReport({
@@ -108,7 +98,7 @@ describe('reportsService.createReport', () => {
   });
 
   it('returns the created report on success', async () => {
-    mockedPostForm.mockResolvedValueOnce(REPORT_RESPONSE);
+    mockedPost.mockResolvedValueOnce(REPORT_RESPONSE);
 
     const result = await reportsService.createReport({
       title: 'Bache en la acera',

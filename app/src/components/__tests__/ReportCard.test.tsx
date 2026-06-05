@@ -1,5 +1,6 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
+import {act} from 'react-test-renderer';
 import {ReportCard} from '../ReportCard';
 import type {Report} from '../../types';
 
@@ -20,7 +21,10 @@ const mockReport: Report = {
 
 describe('ReportCard', () => {
   it('renders without image', () => {
-    const tree = renderer.create(<ReportCard report={mockReport} />).toJSON();
+    let tree;
+    act(() => {
+      tree = renderer.create(<ReportCard report={mockReport} />).toJSON();
+    });
     expect(tree).toMatchSnapshot();
   });
 
@@ -29,15 +33,21 @@ describe('ReportCard', () => {
       ...mockReport,
       imageUrl: 'https://example.com/photo.jpg',
     };
-    const tree = renderer
-      .create(<ReportCard report={reportWithImage} />)
-      .toJSON();
+    let tree;
+    act(() => {
+      tree = renderer
+        .create(<ReportCard report={reportWithImage} />)
+        .toJSON();
+    });
     expect(tree).toMatchSnapshot();
   });
 
   it('renders Resolved status', () => {
     const resolved: Report = {...mockReport, status: 'Resolved'};
-    const tree = renderer.create(<ReportCard report={resolved} />).toJSON();
+    let tree;
+    act(() => {
+      tree = renderer.create(<ReportCard report={resolved} />).toJSON();
+    });
     expect(tree).toMatchSnapshot();
   });
 });

@@ -1,5 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Alert, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 
@@ -14,7 +15,7 @@ import {reportsService} from '../../../api/reportsService';
 import {storageService, STORAGE_KEYS} from '../../../storage/storageService';
 import type {ReportDraft} from '../../../storage/storageService';
 import {ApiError} from '../../../api/types';
-import {Colors, Spacing, Typography} from '../../../theme';
+import {Colors, Spacing} from '../../../theme';
 import type {AppTabParamList} from '../../../navigation/types';
 import type {Category} from '../../../types';
 
@@ -36,6 +37,7 @@ interface FormErrors {
 
 export default function CreateReportScreen() {
   const navigation = useNavigation<Nav>();
+  const insets = useSafeAreaInsets();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -132,12 +134,7 @@ export default function CreateReportScreen() {
     if (categoryId === null) {
       errs.category = 'Selecciona una categoría.';
     }
-    if (!imageUri) {
-      errs.image = 'Agrega una imagen del problema.';
-    }
-    if (!location) {
-      errs.location = 'Selecciona tu ubicación.';
-    }
+    // Image and location are optional.
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -197,12 +194,10 @@ export default function CreateReportScreen() {
         title: title.trim(),
         description: description.trim(),
         categoryId: categoryId!,
-        latitude: location!.latitude,
-        longitude: location!.longitude,
-        address: location?.address,
-        images: imageUri
-          ? [{uri: imageUri, name: 'report.jpg', type: 'image/jpeg'}]
-          : undefined,
+        latitude: location?.latitude ?? null,
+        longitude: location?.longitude ?? null,
+        address: location?.address ?? undefined,
+        imageUrl: imageUri ?? undefined,
       });
 
       await storageService.removeItem(STORAGE_KEYS.REPORT_DRAFT);
@@ -259,8 +254,6 @@ export default function CreateReportScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
 
-        <Text style={styles.heading}>Nuevo reporte</Text>
-
         <AppTextInput
           label="Título"
           placeholder="¿Qué problema detectaste?"
@@ -294,6 +287,7 @@ export default function CreateReportScreen() {
           label="Categoría"
           categories={categories}
           selectedId={categoryId}
+          loading={loadingCategories}
           onSelect={cat => {
             setCategoryId(cat.id);
             clearError('category');
@@ -307,7 +301,7 @@ export default function CreateReportScreen() {
         ) : null}
 
         <ImagePickerField
-          label="Foto del problema"
+          label="Foto del problema (opcional)"
           value={imageUri}
           onPick={handleImagePick}
           onRemove={() => {
@@ -324,7 +318,7 @@ export default function CreateReportScreen() {
         ) : null}
 
         <LocationField
-          label="Ubicación"
+          label="Ubicación (opcional)"
           value={locationDisplay}
           onPress={handleLocationPress}
           disabled={submitting}
@@ -335,15 +329,17 @@ export default function CreateReportScreen() {
             {errors.location}
           </Text>
         ) : null}
+      </ScrollView>
 
+      {/* Fixed footer */}
+      <View style={[styles.footer, {paddingBottom: insets.bottom + 12}]}>
         <LoadingButton
           label="Enviar reporte"
           onPress={handleSubmit}
           loading={submitting}
-          style={styles.submitButton}
           testID="submit-button"
         />
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -359,12 +355,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: Spacing.marginPage,
     paddingTop: Spacing.stackLg,
-    paddingBottom: Spacing.stackXl,
-  },
-  heading: {
-    ...Typography.headlineLgMobile,
-    color: Colors.onSurface,
-    marginBottom: Spacing.stackLg,
+    paddingBottom: Spacing.stackLg,
   },
   fieldError: {
     fontSize: 12,
@@ -374,7 +365,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.stackMd,
     marginLeft: 2,
   },
-  submitButton: {
-    marginTop: Spacing.stackMd,
+  footer: {
+    paddingHorizontal: Spacing.marginPage,
+    paddingTop: 12,
+    backgroundColor: Colors.background,
   },
 });
