@@ -8,6 +8,7 @@ export const STORAGE_KEYS = {
   AUTH_TOKEN: 'ss.auth.token',
   AUTH_USER: 'ss.auth.user',
   STAFF_LAST_FILTER: 'ss.staff.lastFilter',
+  STAFF_REPORTS_CACHE: 'ss.staff.reports.cache',
   REPORT_DRAFT: 'ss.report.draft',
 } as const;
 
@@ -82,6 +83,7 @@ export const storageService = {
       asyncRemove(STORAGE_KEYS.AUTH_TOKEN),
       asyncRemove(STORAGE_KEYS.AUTH_USER),
       asyncRemove(STORAGE_KEYS.STAFF_LAST_FILTER),
+      asyncRemove(STORAGE_KEYS.STAFF_REPORTS_CACHE),
       asyncRemove(STORAGE_KEYS.REPORT_DRAFT),
     ]);
   },

@@ -51,6 +51,9 @@ export function ReportCard({report, onPress, testID}: ReportCardProps) {
       <View style={styles.content}>
         <Text style={styles.category} numberOfLines={1}>{report.category}</Text>
         <Text style={styles.title} numberOfLines={2}>{report.title}</Text>
+        <Text style={styles.author} numberOfLines={1}>
+          {report.createdByName}
+        </Text>
         <Text style={styles.date}>{formattedDate}</Text>
       </View>
     </TouchableOpacity>
@@ -137,6 +140,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#0F172A',
     lineHeight: 20,
+  },
+  author: {
+    fontSize: 12,
+    color: '#475569',
+    lineHeight: 16,
+    fontWeight: '500',
   },
   date: {
     fontSize: 12,

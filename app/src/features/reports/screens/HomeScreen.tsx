@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import type {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {ArrowRight, Bell, ClipboardText, PlusCircle} from 'phosphor-react-native';
@@ -67,12 +67,16 @@ export default function HomeScreen() {
 
   React.useEffect(() => {
     mountedRef.current = true;
-    loadReports().catch(() => {});
-
     return () => {
       mountedRef.current = false;
     };
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadReports().catch(() => {});
+    }, []),
+  );
 
   return (
     <View style={styles.root} testID="home-screen">

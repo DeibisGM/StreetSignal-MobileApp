@@ -172,7 +172,7 @@ function mapReport(raw: RawReportSummaryDto): Report {
     id: raw.id,
     title: raw.title,
     description: raw.description ?? '',
-    categoryId: 0,
+    categoryId: '',
     category: raw.category?.name ?? '',
     status: mapStatus(raw.status),
     latitude: raw.latitude ?? null,
@@ -222,6 +222,11 @@ function toQueryString(params: Record<string, unknown>): string {
   );
 }
 
+export function buildReportsQueryPath(filters?: StaffReportFilters): string {
+  const qs = filters ? toQueryString(filters as Record<string, unknown>) : '';
+  return `${ENDPOINTS.reports.list}${qs}`;
+}
+
 export const reportsService = {
   getMyReports: async (): Promise<PaginatedResponse<Report>> => {
     const response = await apiClient.get<RawPaginatedReportListResponse>(
@@ -231,11 +236,8 @@ export const reportsService = {
   },
 
   getReports: async (filters?: StaffReportFilters): Promise<PaginatedResponse<Report>> => {
-    const qs = filters
-      ? toQueryString(filters as Record<string, unknown>)
-      : '';
     const response = await apiClient.get<RawPaginatedReportListResponse>(
-      `${ENDPOINTS.reports.list}${qs}`,
+      buildReportsQueryPath(filters),
     );
     return mapPaginatedReports(response);
   },
