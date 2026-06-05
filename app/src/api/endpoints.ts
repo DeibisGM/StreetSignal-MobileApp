@@ -21,6 +21,9 @@ export const ENDPOINTS = {
   },
 
   categories: '/categories',
+  users: {
+    staff: '/users/staff',
+  },
 
   reports: {
     mine: '/reports/my',

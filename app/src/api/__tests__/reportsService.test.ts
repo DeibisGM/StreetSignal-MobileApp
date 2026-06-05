@@ -13,6 +13,7 @@ const LIST_RESPONSE = {
       title: 'Bache en la acera',
       description: 'Hay un bache grande en la acera principal',
       status: 'Pending',
+      priority: 'Medium',
       category: {
         id: 'cat-1',
         name: 'Infraestructura',
@@ -25,6 +26,11 @@ const LIST_RESPONSE = {
         id: 'user-1',
         fullName: 'Ciudadano Test',
         role: 0,
+      },
+      assignedTo: {
+        id: 'staff-1',
+        fullName: 'Staff Test',
+        role: 1,
       },
       createdAt: '2026-01-01T00:00:00Z',
       updatedAt: '2026-01-01T00:10:00Z',
@@ -47,6 +53,7 @@ const DETAIL_RESPONSE = {
     title: 'Bache en la acera',
     description: 'Hay un bache grande en la acera principal',
     status: 3,
+    priority: 'High',
     category: {
       id: 'cat-1',
       name: 'Infraestructura',
@@ -58,6 +65,11 @@ const DETAIL_RESPONSE = {
     createdBy: {
       id: 'user-1',
       fullName: 'Funcionario Test',
+      role: 1,
+    },
+    assignedTo: {
+      id: 'staff-2',
+      fullName: 'Encargado Test',
       role: 1,
     },
     createdAt: '2026-01-01T00:00:00Z',
@@ -83,16 +95,20 @@ describe('reportsService.updateReportStatus', () => {
     expect(result.items[0].category).toBe('Infraestructura');
   });
 
-  it('calls PATCH /reports/{id}/status with { newStatus, message }', async () => {
+  it('calls PATCH /reports/{id}/status with status, priority and assignee payload', async () => {
     mockedPatch.mockResolvedValueOnce(DETAIL_RESPONSE);
 
     const result = await reportsService.updateReportStatus('report-1', {
       newStatus: 'InProgress',
+      priority: 'Critical',
+      assignedToId: 'staff-2',
       message: 'Working on it',
     });
 
     expect(mockedPatch).toHaveBeenCalledWith('/reports/report-1/status', {
       newStatus: 3,
+      priority: 3,
+      assignedToId: 'staff-2',
       message: 'Working on it',
     });
     expect(result.id).toBe('report-1');

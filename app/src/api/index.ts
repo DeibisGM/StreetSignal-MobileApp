@@ -9,6 +9,7 @@ export {authService} from './authService';
 export {categoriesService} from './categoriesService';
 export {notificationsService} from './notificationsService';
 export {reportsService} from './reportsService';
+export {usersService} from './usersService';
 
 export type {
   CreateReportRequest,
