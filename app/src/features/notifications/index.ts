@@ -1,2 +1,1 @@
-// Notification list & local push logic
-export {};
+export {default as NotificationsScreen} from './screens/NotificationsScreen';

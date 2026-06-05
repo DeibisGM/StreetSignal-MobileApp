@@ -3,6 +3,8 @@ import {User} from '../types';
 import {authService} from '../api/authService';
 import {sessionManager} from '../api/sessionManager';
 import {storageService} from '../storage';
+import {notificationService} from '../services/notificationService';
+import {useNotificationPolling} from '../hooks/useNotificationPolling';
 import {AuthContext, AuthContextValue} from './AuthContext';
 import AuthNavigator from './AuthNavigator';
 import AppNavigator from './AppNavigator';
@@ -67,6 +69,17 @@ export default function RootNavigator() {
   useEffect(() => {
     sessionManager.setUnauthorizedHandler(logout);
   }, [logout]);
+
+  // Request notification permission and register device token once authenticated
+  useEffect(() => {
+    if (status !== 'authenticated') {
+      return;
+    }
+    notificationService.requestPermission().catch(() => {});
+    notificationService.registerWithServer().catch(() => {});
+  }, [status]);
+
+  useNotificationPolling(status === 'authenticated');
 
   const contextValue: AuthContextValue = {
     isAuthenticated: status === 'authenticated',

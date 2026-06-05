@@ -78,10 +78,9 @@ export interface Notification {
   userId: string;
   reportId?: string;
   title: string;
-  body: string;
+  message: string;
   isRead: boolean;
   createdAt: string;
-  readAt?: string;
 }
 
 export interface AuthResponse {

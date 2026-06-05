@@ -261,6 +261,11 @@ export const translations = {
     },
     notifications: {
       title: 'Notificaciones',
+      loadError: 'No se pudieron cargar las notificaciones.',
+      empty: {
+        title: 'Sin notificaciones',
+        subtitle: 'Cuando haya actualizaciones en tus reportes aparecerán aquí.',
+      },
     },
     profile: {
       header: 'Mi perfil',
@@ -508,6 +513,11 @@ export const translations = {
     },
     notifications: {
       title: 'Notifications',
+      loadError: 'Could not load notifications.',
+      empty: {
+        title: 'No notifications',
+        subtitle: 'When there are updates on your reports they will appear here.',
+      },
     },
     profile: {
       header: 'My profile',
