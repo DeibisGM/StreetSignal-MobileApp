@@ -31,8 +31,8 @@ export interface CreateReportRequest {
   categoryId: string;
   latitude?: number | null;
   longitude?: number | null;
-  address?: string;
-  imageUrl?: string;
+  address?: string | null;
+  imageUrl?: string | null;
 }
 
 export interface UpdateReportRequest {

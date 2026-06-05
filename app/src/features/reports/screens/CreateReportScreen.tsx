@@ -11,6 +11,7 @@ import {LoadingButton} from '../../../components/LoadingButton';
 import {LocationField} from '../../../components/LocationField';
 import {SuccessToast} from '../../../components/SuccessToast';
 import {categoriesService} from '../../../api/categoriesService';
+import {captureFromCamera, pickFromGallery, uploadReportImage, type ImageAsset} from '../../../api/imageService';
 import {reportsService} from '../../../api/reportsService';
 import {storageService, STORAGE_KEYS} from '../../../storage/storageService';
 import type {ReportDraft} from '../../../storage/storageService';
@@ -43,6 +44,7 @@ export default function CreateReportScreen() {
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageAsset, setImageAsset] = useState<ImageAsset | null>(null);
   const [location, setLocation] = useState<LocationValue | null>(null);
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -139,23 +141,30 @@ export default function CreateReportScreen() {
     return Object.keys(errs).length === 0;
   }
 
-  // TODO(#13): replace with imageService.pickFromGallery / captureFromCamera
   function handleImagePick() {
     Alert.alert('Agregar foto', 'Selecciona el origen de la imagen', [
       {
         text: 'Galería',
         onPress: () => {
-          // imageService.pickFromGallery().then(asset => {
-          //   if (asset) { setImageUri(asset.uri); clearError('image'); }
-          // });
+          pickFromGallery().then(asset => {
+            if (asset) {
+              setImageAsset(asset);
+              setImageUri(asset.uri);
+              clearError('image');
+            }
+          });
         },
       },
       {
         text: 'Cámara',
         onPress: () => {
-          // imageService.captureFromCamera().then(asset => {
-          //   if (asset) { setImageUri(asset.uri); clearError('image'); }
-          // });
+          captureFromCamera().then(asset => {
+            if (asset) {
+              setImageAsset(asset);
+              setImageUri(asset.uri);
+              clearError('image');
+            }
+          });
         },
       },
       {text: 'Cancelar', style: 'cancel'},
@@ -190,6 +199,13 @@ export default function CreateReportScreen() {
     setSubmitting(true);
 
     try {
+      const uploadedImageUrl =
+        imageAsset !== null
+          ? await uploadReportImage(imageAsset)
+          : imageUri?.startsWith('http')
+            ? imageUri
+            : undefined;
+
       await reportsService.createReport({
         title: title.trim(),
         description: description.trim(),
@@ -197,7 +213,7 @@ export default function CreateReportScreen() {
         latitude: location?.latitude ?? null,
         longitude: location?.longitude ?? null,
         address: location?.address ?? undefined,
-        imageUrl: imageUri ?? undefined,
+        imageUrl: uploadedImageUrl,
       });
 
       await storageService.removeItem(STORAGE_KEYS.REPORT_DRAFT);
@@ -206,6 +222,7 @@ export default function CreateReportScreen() {
       setDescription('');
       setCategoryId(null);
       setImageUri(null);
+      setImageAsset(null);
       setLocation(null);
       setErrors({});
       setToastMessage('¡Reporte enviado con éxito!');
@@ -306,6 +323,7 @@ export default function CreateReportScreen() {
           onPick={handleImagePick}
           onRemove={() => {
             setImageUri(null);
+            setImageAsset(null);
             clearError('image');
           }}
           disabled={submitting || loadingCategories}
