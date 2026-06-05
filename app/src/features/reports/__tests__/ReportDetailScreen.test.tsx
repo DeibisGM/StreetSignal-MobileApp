@@ -3,6 +3,7 @@ import {act, fireEvent, render} from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {AuthContext} from '../../../navigation/AuthContext';
+import {LanguageProvider} from '../../../i18n';
 import {reportsService} from '../../../api/reportsService';
 import {ApiError} from '../../../api/types';
 import {STORAGE_KEYS} from '../../../storage';
@@ -71,18 +72,20 @@ function makeNav(goBack = jest.fn()) {
 function renderDetail(opts?: {reportId?: string; goBack?: jest.Mock}) {
   const ReportDetailScreen = require('../screens/ReportDetailScreen').default;
   return render(
-    <AuthContext.Provider
-      value={{
-        isAuthenticated: true,
-        user: fakeOwnerUser,
-        login: jest.fn(),
-        logout: jest.fn(),
-      }}>
-      <ReportDetailScreen
-        route={makeRoute(opts?.reportId ?? 'r1')}
-        navigation={makeNav(opts?.goBack)}
-      />
-    </AuthContext.Provider>,
+    <LanguageProvider>
+      <AuthContext.Provider
+        value={{
+          isAuthenticated: true,
+          user: fakeOwnerUser,
+          login: jest.fn(),
+          logout: jest.fn(),
+        }}>
+        <ReportDetailScreen
+          route={makeRoute(opts?.reportId ?? 'r1')}
+          navigation={makeNav(opts?.goBack)}
+        />
+      </AuthContext.Provider>
+    </LanguageProvider>,
   );
 }
 

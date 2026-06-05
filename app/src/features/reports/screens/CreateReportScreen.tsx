@@ -17,6 +17,7 @@ import {storageService, STORAGE_KEYS} from '../../../storage/storageService';
 import type {ReportDraft} from '../../../storage/storageService';
 import {ApiError} from '../../../api/types';
 import {Colors, Spacing} from '../../../theme';
+import {useLanguage} from '../../../i18n';
 import type {AppTabParamList} from '../../../navigation/types';
 import type {Category} from '../../../types';
 
@@ -39,6 +40,8 @@ interface FormErrors {
 export default function CreateReportScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
+  const {t} = useLanguage();
+  const cr = t.reports.create;
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -128,13 +131,13 @@ export default function CreateReportScreen() {
   function validate(): boolean {
     const errs: FormErrors = {};
     if (title.trim().length < 5) {
-      errs.title = 'El título debe tener al menos 5 caracteres.';
+      errs.title = cr.errors.titleTooShort;
     }
     if (description.trim().length < 10) {
-      errs.description = 'La descripción debe tener al menos 10 caracteres.';
+      errs.description = cr.errors.descriptionTooShort;
     }
     if (categoryId === null) {
-      errs.category = 'Selecciona una categoría.';
+      errs.category = cr.errors.categoryRequired;
     }
     // Image and location are optional.
     setErrors(errs);
@@ -142,9 +145,9 @@ export default function CreateReportScreen() {
   }
 
   function handleImagePick() {
-    Alert.alert('Agregar foto', 'Selecciona el origen de la imagen', [
+    Alert.alert(cr.addPhotoTitle, cr.addPhotoMessage, [
       {
-        text: 'Galería',
+        text: cr.gallery,
         onPress: () => {
           pickFromGallery().then(asset => {
             if (asset) {
@@ -156,7 +159,7 @@ export default function CreateReportScreen() {
         },
       },
       {
-        text: 'Cámara',
+        text: cr.camera,
         onPress: () => {
           captureFromCamera().then(asset => {
             if (asset) {
@@ -167,7 +170,7 @@ export default function CreateReportScreen() {
           });
         },
       },
-      {text: 'Cancelar', style: 'cancel'},
+      {text: cr.cancel, style: 'cancel'},
     ]);
   }
 
@@ -226,7 +229,7 @@ export default function CreateReportScreen() {
       setImageAsset(null);
       setLocation(null);
       setErrors({});
-      setToastMessage('¡Reporte enviado con éxito!');
+      setToastMessage(cr.success);
 
       setTimeout(() => {
         navigation.navigate('HomeTab', {screen: 'Home'});
@@ -234,20 +237,14 @@ export default function CreateReportScreen() {
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.statusCode === 401) {
-          Alert.alert(
-            'Sesión expirada',
-            'Tu sesión ha caducado. Inicia sesión nuevamente.',
-          );
+          Alert.alert(cr.errors.sessionExpiredTitle, cr.errors.sessionExpiredMsg);
         } else if (err.statusCode === 400) {
-          Alert.alert(
-            'Datos inválidos',
-            err.message || 'Revisa el formulario e intenta nuevamente.',
-          );
+          Alert.alert(cr.errors.invalidDataTitle, err.message || cr.errors.invalidDataMsg);
         } else {
-          Alert.alert('Error', err.message || 'No se pudo enviar el reporte.');
+          Alert.alert(cr.errors.errorTitle, err.message || cr.errors.sendError);
         }
       } else {
-        Alert.alert('Sin conexión', 'Verifica tu conexión e intenta nuevamente.');
+        Alert.alert(cr.errors.noConnectionTitle, cr.errors.noConnectionMsg);
       }
     } finally {
       submittingRef.current = false;
@@ -273,8 +270,8 @@ export default function CreateReportScreen() {
         showsVerticalScrollIndicator={false}>
 
         <AppTextInput
-          label="Título"
-          placeholder="¿Qué problema detectaste?"
+          label={cr.titleLabel}
+          placeholder={cr.titlePlaceholder}
           value={title}
           onChangeText={text => {
             setTitle(text);
@@ -287,8 +284,8 @@ export default function CreateReportScreen() {
         />
 
         <AppTextInput
-          label="Descripción"
-          placeholder="Describe el problema con más detalle..."
+          label={cr.descriptionLabel}
+          placeholder={cr.descriptionPlaceholder}
           value={description}
           onChangeText={text => {
             setDescription(text);
@@ -302,7 +299,7 @@ export default function CreateReportScreen() {
         />
 
         <CategoryPicker
-          label="Categoría"
+          label={cr.categoryLabel}
           categories={categories}
           selectedId={categoryId}
           loading={loadingCategories}
@@ -319,7 +316,7 @@ export default function CreateReportScreen() {
         ) : null}
 
         <ImagePickerField
-          label="Foto del problema (opcional)"
+          label={cr.photoLabel}
           value={imageUri}
           onPick={handleImagePick}
           onRemove={() => {
@@ -337,7 +334,7 @@ export default function CreateReportScreen() {
         ) : null}
 
         <LocationField
-          label="Ubicación (opcional)"
+          label={cr.locationLabel}
           value={locationDisplay}
           onPress={handleLocationPress}
           disabled={submitting}
@@ -353,7 +350,7 @@ export default function CreateReportScreen() {
       {/* Fixed footer */}
       <View style={[styles.footer, {paddingBottom: insets.bottom + 12}]}>
         <LoadingButton
-          label="Enviar reporte"
+          label={cr.submitButton}
           onPress={handleSubmit}
           loading={submitting}
           testID="submit-button"

@@ -13,7 +13,7 @@ import {reportsService} from '../../../api/reportsService';
 import {ApiError} from '../../../api/types';
 import {REPORT_STATUSES} from '../../../constants';
 import {Colors, BorderRadius, Spacing} from '../../../theme';
-import {statusLabel} from '../../../utils';
+import {useLanguage} from '../../../i18n';
 import {StaffStackParamList} from '../../../navigation/types';
 import type {Report, ReportStatus} from '../../../types';
 import {ReportDetailView} from '../../reports/components/ReportDetailView';
@@ -27,6 +27,8 @@ function isValidStatus(value: ReportStatus | null): value is ReportStatus {
 }
 
 export default function StaffReportDetailScreen({route}: Props) {
+  const {t} = useLanguage();
+  const sd = t.staff.detail;
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
   const [screenError, setScreenError] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export default function StaffReportDetailScreen({route}: Props) {
         setScreenError(
           err instanceof ApiError
             ? err.message
-            : 'No se pudo cargar el detalle del reporte.',
+            : sd.loadError,
         );
       }
     } finally {
@@ -85,15 +87,15 @@ export default function StaffReportDetailScreen({route}: Props) {
 
     const trimmedMessage = message.trim();
     if (!trimmedMessage) {
-      setActionError('El mensaje no puede estar vacío.');
+      setActionError(sd.errors.messageEmpty);
       return;
     }
     if (trimmedMessage.length > MESSAGE_MAX_LENGTH) {
-      setActionError('El mensaje no puede exceder 500 caracteres.');
+      setActionError(sd.errors.messageTooLong);
       return;
     }
     if (!isValidStatus(selectedStatus)) {
-      setActionError('Selecciona un estado válido.');
+      setActionError(sd.errors.invalidStatus);
       return;
     }
 
@@ -106,19 +108,19 @@ export default function StaffReportDetailScreen({route}: Props) {
           newStatus: selectedStatus,
           message: trimmedMessage,
         });
-        setToastMessage('Estado actualizado correctamente.');
+        setToastMessage(sd.success.statusUpdated);
       } else {
         await reportsService.addReportUpdate(report.id, {
           message: trimmedMessage,
         });
-        setToastMessage('Comentario agregado correctamente.');
+        setToastMessage(sd.success.commentAdded);
       }
 
       setMessage('');
       await refreshAfterAction();
     } catch (err) {
       setActionError(
-        err instanceof ApiError ? err.message : 'No se pudo actualizar el reporte.',
+        err instanceof ApiError ? err.message : sd.errors.updateFailed,
       );
     } finally {
       setSubmitting(false);
@@ -128,7 +130,7 @@ export default function StaffReportDetailScreen({route}: Props) {
   if (loading && !report) {
     return (
       <View style={styles.center} testID="staff-report-detail-loading">
-        <Text style={styles.centerText}>Cargando detalle...</Text>
+        <Text style={styles.centerText}>{sd.loading}</Text>
       </View>
     );
   }
@@ -137,7 +139,7 @@ export default function StaffReportDetailScreen({route}: Props) {
     return (
       <View style={styles.center} testID="staff-report-detail-error">
         <ErrorMessage message={screenError} />
-        <LoadingButton label="Reintentar" onPress={loadReport} />
+        <LoadingButton label={sd.retry} onPress={loadReport} />
       </View>
     );
   }
@@ -157,13 +159,14 @@ export default function StaffReportDetailScreen({route}: Props) {
 
       <ReportDetailView report={report}>
         <View style={styles.panel}>
-          <Text style={styles.panelTitle}>Acciones de staff</Text>
-          <Text style={styles.panelSubtitle}>
-            El cambio de estado y el comentario quedan registrados en la línea
-            de tiempo.
-          </Text>
+          <Text style={styles.panelTitle}>{sd.actionsTitle}</Text>
+          <Text style={styles.panelSubtitle}>{sd.actionsHint}</Text>
 
-          <Text style={styles.selectorLabel}>Cambiar estado a</Text>
+          <View style={styles.currentStatusRow}>
+            <Text style={styles.currentStatusLabel}>{sd.currentStatus}</Text>
+            <StatusBadge status={report.status} />
+          </View>
+
           <View style={styles.selectorGrid}>
             {REPORT_STATUSES.map(status => {
               const selected = selectedStatus === status;
@@ -185,7 +188,7 @@ export default function StaffReportDetailScreen({route}: Props) {
                   activeOpacity={0.8}
                   accessibilityRole="radio"
                   accessibilityState={{selected, disabled: isBusy}}
-                  accessibilityLabel={statusLabel(status)}
+                  accessibilityLabel={t.statusLabels[status] ?? status}
                   testID={`status-option-${status}`}>
                   <StatusBadge status={status} />
                 </TouchableOpacity>
@@ -194,8 +197,8 @@ export default function StaffReportDetailScreen({route}: Props) {
           </View>
 
           <AppTextInput
-            label="Mensaje"
-            placeholder="Describe el avance o la razón del cambio"
+            label={sd.messageLabel}
+            placeholder={sd.messagePlaceholder}
             value={message}
             onChangeText={text => {
               setMessage(text);
@@ -207,14 +210,14 @@ export default function StaffReportDetailScreen({route}: Props) {
             multiline
             numberOfLines={4}
             maxLength={MESSAGE_MAX_LENGTH}
-            helperText="Obligatorio. Máximo 500 caracteres."
+            helperText={sd.messageHint}
             testID="staff-message-input"
           />
 
           <ErrorMessage message={actionError} testID="staff-action-error" />
 
           <LoadingButton
-            label="Actualizar"
+            label={sd.submitButton}
             onPress={handleSubmit}
             loading={submitting}
             disabled={loading}

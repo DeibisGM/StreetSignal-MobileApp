@@ -2,6 +2,7 @@ import React from 'react';
 import renderer from 'react-test-renderer';
 import {act} from 'react-test-renderer';
 import {UpdateTimelineItem} from '../UpdateTimelineItem';
+import {LanguageProvider} from '../../i18n';
 import type {ReportUpdate} from '../../types';
 
 const commentUpdate: ReportUpdate = {
@@ -33,7 +34,7 @@ describe('UpdateTimelineItem', () => {
     let tree;
     act(() => {
       tree = renderer
-        .create(<UpdateTimelineItem update={commentUpdate} />)
+        .create(<LanguageProvider><UpdateTimelineItem update={commentUpdate} /></LanguageProvider>)
         .toJSON();
     });
     expect(tree).toMatchSnapshot();
@@ -43,7 +44,7 @@ describe('UpdateTimelineItem', () => {
     let tree;
     act(() => {
       tree = renderer
-        .create(<UpdateTimelineItem update={statusUpdate} />)
+        .create(<LanguageProvider><UpdateTimelineItem update={statusUpdate} /></LanguageProvider>)
         .toJSON();
     });
     expect(tree).toMatchSnapshot();
@@ -53,7 +54,7 @@ describe('UpdateTimelineItem', () => {
     let tree;
     act(() => {
       tree = renderer
-        .create(<UpdateTimelineItem update={commentUpdate} isLast />)
+        .create(<LanguageProvider><UpdateTimelineItem update={commentUpdate} isLast /></LanguageProvider>)
         .toJSON();
     });
     expect(tree).toMatchSnapshot();

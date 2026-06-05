@@ -19,6 +19,7 @@ import {LoadingButton} from '../../../components/auth/LoadingButton';
 import {SuccessToast} from '../../../components/SuccessToast';
 import {useLogin} from '../hooks/useLogin';
 import {useAuth} from '../../../navigation/AuthContext';
+import {useLanguage} from '../../../i18n';
 import {BASE_URL} from '../../../api';
 import type {AuthStackParamList} from '../../../navigation/types';
 
@@ -32,6 +33,8 @@ interface Props {
 export function LoginScreen({successMessage, onDismissSuccess}: Props) {
   const navigation = useNavigation<Nav>();
   const {login} = useAuth();
+  const {t} = useLanguage();
+  const l = t.auth.login;
   const {
     email,
     password,
@@ -63,16 +66,14 @@ export function LoginScreen({successMessage, onDismissSuccess}: Props) {
           {/* Header */}
           <View style={styles.header}>
             <AppLogo size={52} />
-            <Text style={styles.appName}>StreetSignal</Text>
-            <Text style={styles.tagline}>Plataforma de Reportes Ciudadanos</Text>
+            <Text style={styles.appName}>{t.common.appName}</Text>
+            <Text style={styles.tagline}>{t.common.tagline}</Text>
           </View>
 
           {/* Form card */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Iniciar sesion</Text>
-            <Text style={styles.cardSubtitle}>
-              Ingresa tus credenciales para continuar
-            </Text>
+            <Text style={styles.cardTitle}>{l.title}</Text>
+            <Text style={styles.cardSubtitle}>{l.subtitle}</Text>
 
             {/* Global error */}
             {error ? (
@@ -83,7 +84,7 @@ export function LoginScreen({successMessage, onDismissSuccess}: Props) {
 
             {/* Email field */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Correo electronico</Text>
+              <Text style={styles.fieldLabel}>{l.emailLabel}</Text>
               <View
                 style={[
                   styles.inputWrapper,
@@ -92,7 +93,7 @@ export function LoginScreen({successMessage, onDismissSuccess}: Props) {
                 <Text style={styles.inputPrefix}>@</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="correo@ejemplo.com"
+                  placeholder={l.emailPlaceholder}
                   placeholderTextColor="#A0B8D0"
                   value={email}
                   onChangeText={setEmail}
@@ -111,7 +112,7 @@ export function LoginScreen({successMessage, onDismissSuccess}: Props) {
 
             {/* Password field */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Contrasena</Text>
+              <Text style={styles.fieldLabel}>{l.passwordLabel}</Text>
               <View
                 style={[
                   styles.inputWrapper,
@@ -120,7 +121,7 @@ export function LoginScreen({successMessage, onDismissSuccess}: Props) {
                 <Text style={styles.inputPrefix}>*</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Minimo 6 caracteres"
+                  placeholder={l.passwordPlaceholder}
                   placeholderTextColor="#A0B8D0"
                   value={password}
                   onChangeText={setPassword}
@@ -137,7 +138,7 @@ export function LoginScreen({successMessage, onDismissSuccess}: Props) {
                   hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
                   testID="toggle-password">
                   <Text style={styles.eyeText}>
-                    {showPassword ? 'Ocultar' : 'Ver'}
+                    {showPassword ? l.hidePassword : l.showPassword}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -148,7 +149,7 @@ export function LoginScreen({successMessage, onDismissSuccess}: Props) {
 
             {/* Submit */}
             <LoadingButton
-              label="Iniciar sesion"
+              label={l.submitButton}
               onPress={submit}
               loading={loading}
               testID="submit-button"
@@ -168,9 +169,9 @@ export function LoginScreen({successMessage, onDismissSuccess}: Props) {
 
             {/* Register link */}
             <View style={styles.registerRow}>
-              <Text style={styles.registerText}>No tienes cuenta? </Text>
+              <Text style={styles.registerText}>{l.noAccount}</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Register')} testID="go-to-register">
-                <Text style={styles.registerLink}>Registrate</Text>
+                <Text style={styles.registerLink}>{l.register}</Text>
               </TouchableOpacity>
             </View>
           </View>

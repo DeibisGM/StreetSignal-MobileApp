@@ -14,8 +14,8 @@ export function parseUTCDate(iso: string): Date {
   return new Date(iso + 'Z');
 }
 
-export function formatDate(iso: string): string {
-  return parseUTCDate(iso).toLocaleDateString('es-CR', {
+export function formatDate(iso: string, locale = 'es-CR'): string {
+  return parseUTCDate(iso).toLocaleDateString(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

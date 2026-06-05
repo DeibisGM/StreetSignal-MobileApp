@@ -83,7 +83,12 @@ async function request<T>(
             `[API] ${String(options.method)} ${url} -> ${response.status} ${apiError.code}: ${apiError.message}`,
           );
         }
-        if (response.status === 401) {
+        // Only trigger the unauthorized handler when there is an active
+        // session. Without this guard a fire-and-forget logout request
+        // (sent without a token) that returns 401 would call logout() again
+        // and wipe status='authenticated' if the user had already signed
+        // back in by the time the stale response arrived.
+        if (response.status === 401 && sessionManager.getToken() !== null) {
           sessionManager.notifyUnauthorized();
         }
         throw apiError;

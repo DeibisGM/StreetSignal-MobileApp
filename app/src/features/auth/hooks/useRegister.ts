@@ -1,8 +1,7 @@
 import {useRef, useState} from 'react';
-import {authService} from '../../../services/auth/authService';
-import {storageService} from '../../../storage'; // Keychain-backed
-import {sessionManager} from '../../../api/sessionManager';
+import {authService} from '../../../api/authService';
 import {isValidEmail} from '../../../utils';
+import {useLanguage} from '../../../i18n';
 
 export type PasswordStrength = 'none' | 'weak' | 'medium' | 'strong';
 
@@ -54,35 +53,39 @@ export function getPasswordStrength(password: string): PasswordStrength {
   return 'weak';
 }
 
-function getErrorMessage(err: unknown): string {
-  if (err instanceof TypeError && err.message.includes('Network request failed')) {
-    return 'Sin conexion a internet. Verifica tu red e intenta de nuevo.';
-  }
-  if (err instanceof Error) {
-    const msg = err.message.toLowerCase();
-    if (
-      msg.includes('409') ||
-      msg.includes('already') ||
-      msg.includes('exist') ||
-      msg.includes('duplicate') ||
-      msg.includes('conflict') ||
-      msg.includes('registrado') ||
-      msg.includes('uso')
-    ) {
-      return 'Este correo ya esta en uso. Prueba con otro o inicia sesion.';
-    }
-    if (msg.includes('500') || msg.includes('502') || msg.includes('503')) {
-      return 'Error en el servidor. Intenta de nuevo en unos momentos.';
-    }
-  }
-  return 'Ocurrio un error inesperado. Intenta de nuevo.';
-}
-
 export function useRegister() {
+  const {t} = useLanguage();
+  const v = t.auth.validation;
+  const e = t.auth.errors;
+
   const [state, setState] = useState<State>(INITIAL);
   const submitting = useRef(false);
 
   const passwordStrength = getPasswordStrength(state.password);
+
+  function getErrorMessage(err: unknown): string {
+    if (err instanceof TypeError && err.message.includes('Network request failed')) {
+      return e.noInternet;
+    }
+    if (err instanceof Error) {
+      const msg = err.message.toLowerCase();
+      if (
+        msg.includes('409') ||
+        msg.includes('already') ||
+        msg.includes('exist') ||
+        msg.includes('duplicate') ||
+        msg.includes('conflict') ||
+        msg.includes('registrado') ||
+        msg.includes('uso')
+      ) {
+        return e.emailInUse;
+      }
+      if (msg.includes('500') || msg.includes('502') || msg.includes('503')) {
+        return e.serverError;
+      }
+    }
+    return e.unexpected;
+  }
 
   function setFullName(value: string) {
     setState(prev => {
@@ -105,7 +108,7 @@ export function useRegister() {
       const next = {...prev.fieldErrors};
       delete next.password;
       if (prev.confirmPassword && value !== prev.confirmPassword) {
-        next.confirmPassword = 'Las contrasenas no coinciden';
+        next.confirmPassword = v.passwordsMismatch;
       } else if (prev.confirmPassword && value === prev.confirmPassword) {
         delete next.confirmPassword;
       }
@@ -117,7 +120,7 @@ export function useRegister() {
     setState(prev => {
       const next = {...prev.fieldErrors};
       if (value && value !== prev.password) {
-        next.confirmPassword = 'Las contrasenas no coinciden';
+        next.confirmPassword = v.passwordsMismatch;
       } else {
         delete next.confirmPassword;
       }
@@ -137,27 +140,27 @@ export function useRegister() {
     const errors: FieldErrors = {};
 
     if (!state.fullName.trim()) {
-      errors.fullName = 'El nombre es obligatorio';
+      errors.fullName = v.nameRequired;
     } else if (state.fullName.trim().length < 3) {
-      errors.fullName = 'El nombre debe tener al menos 3 caracteres';
+      errors.fullName = v.nameTooShort;
     }
 
     if (!state.email.trim()) {
-      errors.email = 'El correo es obligatorio';
+      errors.email = v.emailRequired;
     } else if (!isValidEmail(state.email.trim())) {
-      errors.email = 'Ingresa un correo con formato valido';
+      errors.email = v.emailInvalid;
     }
 
     if (!state.password) {
-      errors.password = 'La contrasena es obligatoria';
+      errors.password = v.passwordRequired;
     } else if (state.password.length < 6) {
-      errors.password = 'La contrasena debe tener al menos 6 caracteres';
+      errors.password = v.passwordTooShort;
     }
 
     if (!state.confirmPassword) {
-      errors.confirmPassword = 'Confirma tu contrasena';
+      errors.confirmPassword = v.confirmPasswordRequired;
     } else if (state.password !== state.confirmPassword) {
-      errors.confirmPassword = 'Las contrasenas no coinciden';
+      errors.confirmPassword = v.passwordsMismatch;
     }
 
     setState(prev => ({...prev, fieldErrors: errors}));
@@ -192,14 +195,12 @@ export function useRegister() {
     setState(prev => ({...prev, loading: true, error: null, success: false}));
 
     try {
-      const response = await authService.register({
+      await authService.register({
         fullName: state.fullName.trim(),
         email: state.email.trim().toLowerCase(),
         password: state.password,
         confirmPassword: state.confirmPassword,
       });
-      sessionManager.setSession(response.token, response.user);
-      storageService.saveSession(response.token, response.user).catch(() => {});
       setState(prev => ({...prev, loading: false, success: true}));
     } catch (err: unknown) {
       setState(prev => ({

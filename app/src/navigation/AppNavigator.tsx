@@ -5,6 +5,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {Bell, House, SignOut, UserCircle} from 'phosphor-react-native';
 
 import {useAuth} from './AuthContext';
+import {useLanguage} from '../i18n';
 import {AppTabParamList, HomeStackParamList, StaffStackParamList} from './types';
 import {Colors} from '../theme';
 
@@ -29,6 +30,8 @@ const HEADER = {
 };
 
 function HomeStackNavigator() {
+  const {t} = useLanguage();
+  const nav = t.navigation;
   return (
     <HomeStack.Navigator screenOptions={HEADER}>
       <HomeStack.Screen
@@ -39,34 +42,36 @@ function HomeStackNavigator() {
       <HomeStack.Screen
         name="MyReports"
         component={MyReportsScreen}
-        options={{title: 'Mis reportes'}}
+        options={{title: nav.myReports}}
       />
       <HomeStack.Screen
         name="ReportDetail"
         component={ReportDetailScreen}
-        options={{title: 'Detalle del reporte'}}
+        options={{title: nav.reportDetail}}
       />
       <HomeStack.Screen
         name="CreateReport"
         component={CreateReportScreen}
-        options={{title: 'Nuevo reporte'}}
+        options={{title: nav.newReport}}
       />
     </HomeStack.Navigator>
   );
 }
 
 function StaffStackNavigator() {
+  const {t} = useLanguage();
+  const nav = t.navigation;
   return (
     <StaffStack.Navigator screenOptions={HEADER}>
       <StaffStack.Screen
         name="StaffReportsList"
         component={StaffReportsListScreen}
-        options={{title: 'Reportes'}}
+        options={{title: nav.reports}}
       />
       <StaffStack.Screen
         name="StaffReportDetail"
         component={StaffReportDetailScreen}
-        options={{title: 'Detalle'}}
+        options={{title: nav.detail}}
       />
     </StaffStack.Navigator>
   );
@@ -82,6 +87,8 @@ function DummyScreen() {
 function LogoutTabButton(props: Record<string, any>) {
   const [visible, setVisible] = React.useState(false);
   const {logout} = useAuth();
+  const {t} = useLanguage();
+  const so = t.navigation.signOut;
 
   function confirm() {
     setVisible(false);
@@ -95,9 +102,9 @@ function LogoutTabButton(props: Record<string, any>) {
         onPress={() => setVisible(true)}
         activeOpacity={0.75}
         accessibilityRole="button"
-        accessibilityLabel="Cerrar sesión">
+        accessibilityLabel={so.accessibilityLabel}>
         <SignOut size={23} color="#DC2626" weight="regular" />
-        <Text style={tabStyles.logoutLabel}>Salir</Text>
+        <Text style={tabStyles.logoutLabel}>{t.navigation.exit}</Text>
       </TouchableOpacity>
 
       <Modal
@@ -113,22 +120,20 @@ function LogoutTabButton(props: Record<string, any>) {
             <View style={tabStyles.iconWrap}>
               <SignOut size={28} color="#DC2626" weight="regular" />
             </View>
-            <Text style={tabStyles.modalTitle}>¿Cerrar sesión?</Text>
-            <Text style={tabStyles.modalSub}>
-              Tu sesión actual se cerrará.
-            </Text>
+            <Text style={tabStyles.modalTitle}>{so.confirmTitle}</Text>
+            <Text style={tabStyles.modalSub}>{so.confirmMessage}</Text>
             <View style={tabStyles.modalButtons}>
               <TouchableOpacity
                 style={tabStyles.cancelBtn}
                 onPress={() => setVisible(false)}
                 activeOpacity={0.8}>
-                <Text style={tabStyles.cancelText}>Cancelar</Text>
+                <Text style={tabStyles.cancelText}>{so.cancel}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={tabStyles.confirmBtn}
                 onPress={confirm}
                 activeOpacity={0.8}>
-                <Text style={tabStyles.confirmText}>Cerrar sesión</Text>
+                <Text style={tabStyles.confirmText}>{so.confirm}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -157,40 +162,43 @@ function TabIconUser({color, focused}: TabIconProps) {
 
 export default function AppNavigator() {
   const {user} = useAuth();
+  const {t} = useLanguage();
+  const nav = t.navigation;
   const isStaff = user?.role === 'staff';
 
+  const TAB_OPTIONS = {
+    headerShown: false,
+    tabBarActiveTintColor: Colors.primary,
+    tabBarInactiveTintColor: Colors.outline,
+    tabBarStyle: {
+      backgroundColor: Colors.surfaceContainerLowest,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: Colors.outlineVariant,
+      height: 72,
+      paddingBottom: 14,
+      paddingTop: 10,
+      shadowColor: '#000',
+      shadowOffset: {width: 0, height: -1},
+      shadowOpacity: 0.04,
+      shadowRadius: 3,
+      elevation: 2,
+    },
+    tabBarLabelStyle: {
+      fontSize: 11,
+      fontWeight: '500' as const,
+      letterSpacing: 0,
+      marginTop: 1,
+    },
+  };
+
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.outline,
-        tabBarStyle: {
-          backgroundColor: Colors.surfaceContainerLowest,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: Colors.outlineVariant,
-          height: 72,
-          paddingBottom: 14,
-          paddingTop: 10,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: -1},
-          shadowOpacity: 0.04,
-          shadowRadius: 3,
-          elevation: 2,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
-          letterSpacing: 0,
-          marginTop: 1,
-        },
-      }}>
+    <Tab.Navigator screenOptions={TAB_OPTIONS}>
       {isStaff ? (
         <Tab.Screen
           name="StaffTab"
           component={StaffStackNavigator}
           options={{
-            title: 'Reportes',
+            title: nav.reports,
             tabBarIcon: ({color, focused}) => (
               <House size={iconSize} color={color} weight={focused ? 'fill' : 'regular'} />
             ),
@@ -201,32 +209,23 @@ export default function AppNavigator() {
           <Tab.Screen
             name="HomeTab"
             component={HomeStackNavigator}
-            options={{
-              title: 'Inicio',
-              tabBarIcon: TabIconHouse,
-            }}
+            options={{title: nav.home, tabBarIcon: TabIconHouse}}
           />
           <Tab.Screen
             name="Notifications"
             component={NotificationsScreen}
-            options={{
-              title: 'Alertas',
-              tabBarIcon: TabIconBell,
-            }}
+            options={{title: nav.alerts, tabBarIcon: TabIconBell}}
           />
           <Tab.Screen
             name="Profile"
             component={ProfileScreen}
-            options={{
-              title: 'Perfil',
-              tabBarIcon: TabIconUser,
-            }}
+            options={{title: nav.profile, tabBarIcon: TabIconUser}}
           />
           <Tab.Screen
             name="Logout"
             component={DummyScreen}
             options={{
-              title: 'Salir',
+              title: nav.exit,
               tabBarButton: props => <LogoutTabButton {...props} />,
             }}
           />
@@ -234,14 +233,18 @@ export default function AppNavigator() {
       )}
 
       {isStaff && (
-        <Tab.Screen
-          name="Notifications"
-          component={NotificationsScreen}
-          options={{
-            title: 'Alertas',
-            tabBarIcon: TabIconBell,
-          }}
-        />
+        <>
+          <Tab.Screen
+            name="Notifications"
+            component={NotificationsScreen}
+            options={{title: nav.alerts, tabBarIcon: TabIconBell}}
+          />
+          <Tab.Screen
+            name="Profile"
+            component={ProfileScreen}
+            options={{title: nav.profile, tabBarIcon: TabIconUser}}
+          />
+        </>
       )}
     </Tab.Navigator>
   );
