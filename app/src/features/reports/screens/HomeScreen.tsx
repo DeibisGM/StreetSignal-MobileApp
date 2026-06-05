@@ -14,19 +14,16 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import type {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {
-  Bell,
-  ClipboardText,
-  Plus,
-} from 'phosphor-react-native';
+import {Bell, ClipboardText, Plus} from 'phosphor-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {EmptyState, ErrorMessage, LogoMark, ReportCard} from '../../../components';
 import {reportsService} from '../../../api/reportsService';
 import {ApiError} from '../../../api/types';
 import {useAuth} from '../../../navigation/AuthContext';
+import {useLanguage} from '../../../i18n';
 import {BorderRadius, Colors, Spacing} from '../../../theme';
-import {REPORT_STATUS_LABELS, STORAGE_KEYS} from '../../../constants';
+import {STORAGE_KEYS} from '../../../constants';
 import type {AppTabParamList, HomeStackParamList} from '../../../navigation/types';
 import type {Report, ReportStatus} from '../../../types';
 
@@ -37,22 +34,26 @@ const PAGE_SIZE = 10;
 
 type FilterOption = {label: string; value: ReportStatus | null};
 
-const FILTER_OPTIONS: FilterOption[] = [
-  {label: 'Todos', value: null},
-  {label: REPORT_STATUS_LABELS.Pending, value: 'Pending'},
-  {label: REPORT_STATUS_LABELS.InReview, value: 'InReview'},
-  {label: REPORT_STATUS_LABELS.Assigned, value: 'Assigned'},
-  {label: REPORT_STATUS_LABELS.InProgress, value: 'InProgress'},
-  {label: REPORT_STATUS_LABELS.Resolved, value: 'Resolved'},
-  {label: REPORT_STATUS_LABELS.Rejected, value: 'Rejected'},
-];
-
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const parentNavigation = navigation.getParent<TabNav>();
   const {user} = useAuth();
-  const firstName = user?.fullName?.split(' ')[0] ?? 'ciudadano';
+  const {t} = useLanguage();
+  const h = t.home;
+
+  const firstName = user?.fullName?.split(' ')[0] ?? h.defaultGreeting;
+
+  // Build filter options using i18n status labels
+  const FILTER_OPTIONS: FilterOption[] = [
+    {label: t.statusLabels.Pending === 'Pendiente' ? 'Todos' : 'All', value: null},
+    {label: t.statusLabels.Pending, value: 'Pending'},
+    {label: t.statusLabels.InReview, value: 'InReview'},
+    {label: t.statusLabels.Assigned, value: 'Assigned'},
+    {label: t.statusLabels.InProgress, value: 'InProgress'},
+    {label: t.statusLabels.Resolved, value: 'Resolved'},
+    {label: t.statusLabels.Rejected, value: 'Rejected'},
+  ];
 
   const [reports, setReports] = React.useState<Report[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -64,12 +65,6 @@ export default function HomeScreen() {
   const [statusFilter, setStatusFilter] = React.useState<ReportStatus | null>(null);
 
   const mountedRef = React.useRef(false);
-  /**
-   * Tracks whether we ever had data on screen. Used to decide between
-   * "show full-page spinner" and "soft refresh" on focus — we don't
-   * want to blank the list every time the citizen comes back from
-   * CreateReport.
-   */
   const hasDataRef = React.useRef(false);
 
   const goToCreate = () => navigation.navigate('CreateReport');
@@ -111,9 +106,7 @@ export default function HomeScreen() {
         return;
       }
       setError(
-        err instanceof ApiError
-          ? err.message
-          : 'No se pudieron cargar tus reportes.',
+        err instanceof ApiError ? err.message : h.loadError,
       );
     } finally {
       if (!mountedRef.current) {
@@ -125,7 +118,6 @@ export default function HomeScreen() {
     }
   }
 
-  // Mount: hydrate cache → first fetch.
   React.useEffect(() => {
     mountedRef.current = true;
     AsyncStorage.getItem(STORAGE_KEYS.CACHED_REPORTS)
@@ -152,9 +144,6 @@ export default function HomeScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Focus: silently refresh the first page so a new report created in
-  // CreateReport shows up the moment the citizen returns. We don't
-  // touch the spinner — if we already have data, we keep showing it.
   useFocusEffect(
     React.useCallback(() => {
       if (!hasDataRef.current) {
@@ -207,7 +196,7 @@ export default function HomeScreen() {
             style={styles.notifBtn}
             onPress={goToNotifs}
             accessibilityRole="button"
-            accessibilityLabel="Notificaciones">
+            accessibilityLabel={h.notificationsA11y}>
             <Bell size={20} color="#fff" weight="regular" />
           </TouchableOpacity>
         </View>
@@ -230,8 +219,7 @@ export default function HomeScreen() {
                 accessibilityRole="button"
                 accessibilityState={{selected: isActive}}
                 testID={`home-status-chip-${opt.value ?? 'all'}`}>
-                <Text
-                  style={[styles.chipLabel, isActive && styles.chipLabelActive]}>
+                <Text style={[styles.chipLabel, isActive && styles.chipLabelActive]}>
                   {opt.label}
                 </Text>
               </TouchableOpacity>
@@ -244,7 +232,7 @@ export default function HomeScreen() {
       {showFullPageLoading ? (
         <View style={styles.feedbackArea} testID="home-reports-loading">
           <ActivityIndicator color={Colors.primary} size="small" />
-          <Text style={styles.feedbackText}>Cargando...</Text>
+          <Text style={styles.feedbackText}>{h.loadingReports}</Text>
         </View>
       ) : showFullPageError ? (
         <View style={styles.feedbackArea} testID="home-reports-error">
@@ -254,7 +242,7 @@ export default function HomeScreen() {
             onPress={() => fetchPage(1, statusFilter, 'initial').catch(() => {})}
             activeOpacity={0.8}
             accessibilityRole="button">
-            <Text style={styles.retryLabel}>Reintentar</Text>
+            <Text style={styles.retryLabel}>{t.reports.myReports.retry}</Text>
           </TouchableOpacity>
         </View>
       ) : showEmptyState ? (
@@ -262,20 +250,13 @@ export default function HomeScreen() {
           <View style={styles.emptyWrap}>
             <EmptyState
               Icon={ClipboardText}
-              title={
-                statusFilter
-                  ? REPORT_STATUS_LABELS[statusFilter] === 'Pendiente' &&
-                    statusFilter === 'Pending'
-                    ? 'Nada por aquí'
-                    : 'Sin resultados'
-                  : 'Aún no tienes reportes'
-              }
+              title={statusFilter ? t.common.loading : h.emptyTitle}
               subtitle={
                 statusFilter
-                  ? 'No tienes reportes con este estado.'
-                  : 'Crea tu primer reporte y aparecerá aquí con su estado actualizado.'
+                  ? t.reports.myReports.emptyTitle
+                  : h.emptySub
               }
-              actionLabel={statusFilter ? undefined : 'Crear reporte'}
+              actionLabel={statusFilter ? undefined : h.createFirst}
               onAction={statusFilter ? undefined : goToCreate}
             />
           </View>
@@ -296,20 +277,14 @@ export default function HomeScreen() {
           ListHeaderComponent={
             <View style={styles.listHeader}>
               <View style={styles.listHeaderLeft}>
-                <Text style={styles.listHeaderTitle}>Reportes</Text>
+                <Text style={styles.listHeaderTitle}>{t.navigation.reports}</Text>
               </View>
               <View
                 style={styles.listHeaderCount}
                 testID="home-reports-count"
-                accessibilityLabel={`${reports.length}${
-                  hasMore ? ' o más' : ''
-                } reportes`}>
-                <Text style={styles.listHeaderCountNumber}>
-                  {reports.length}
-                </Text>
-                {hasMore ? (
-                  <Text style={styles.listHeaderCountPlus}>+</Text>
-                ) : null}
+                accessibilityLabel={`${reports.length}${hasMore ? ' o más' : ''} reportes`}>
+                <Text style={styles.listHeaderCountNumber}>{reports.length}</Text>
+                {hasMore ? <Text style={styles.listHeaderCountPlus}>+</Text> : null}
               </View>
             </View>
           }
@@ -338,13 +313,13 @@ export default function HomeScreen() {
         />
       )}
 
-      {/* ── FAB ──────────────────────────────────────────────────────── */}
+      {/* ── FAB ──────────────────────────────────────────────────── */}
       <TouchableOpacity
         style={[styles.fab, {bottom: insets.bottom + 20}]}
         onPress={goToCreate}
         activeOpacity={0.85}
         accessibilityRole="button"
-        accessibilityLabel="Crear nuevo reporte"
+        accessibilityLabel={h.newReportA11y}
         testID="home-fab">
         <Plus size={22} color="#fff" weight="bold" />
       </TouchableOpacity>
@@ -353,13 +328,8 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
+  root: {flex: 1, backgroundColor: Colors.background},
   flex: {flex: 1},
-
-  /* Hero header */
   hero: {
     backgroundColor: Colors.primary,
     paddingHorizontal: Spacing.marginPage,
@@ -392,8 +362,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  /* Chips bar (status filter) */
   chipsBar: {
     backgroundColor: Colors.surfaceContainerLowest,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -419,17 +387,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
-  chipLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: Colors.onSurfaceVariant,
-  },
-  chipLabelActive: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-
-  /* List section header */
+  chipLabel: {fontSize: 13, fontWeight: '500', color: Colors.onSurfaceVariant},
+  chipLabelActive: {color: '#fff', fontWeight: '600'},
   listHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -439,10 +398,7 @@ const styles = StyleSheet.create({
     paddingBottom: 18,
     gap: 12,
   },
-  listHeaderLeft: {
-    flex: 1,
-    minWidth: 0,
-  },
+  listHeaderLeft: {flex: 1, minWidth: 0},
   listHeaderTitle: {
     fontSize: 19,
     fontWeight: '700',
@@ -472,19 +428,8 @@ const styles = StyleSheet.create({
     color: Colors.onPrimaryContainer,
     marginLeft: 1,
   },
-
-  /* List content padding */
-  listContent: {
-    paddingBottom: 96,
-  },
-
-  /* Load more spinner */
-  loadMoreRow: {
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-
-  /* Feedback states (loading / error) */
+  listContent: {paddingBottom: 96},
+  loadMoreRow: {paddingVertical: 16, alignItems: 'center'},
   feedbackArea: {
     flex: 1,
     alignItems: 'center',
@@ -492,29 +437,15 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: Spacing.marginPage,
   },
-  feedbackText: {
-    fontSize: 14,
-    color: Colors.onSurfaceVariant,
-  },
+  feedbackText: {fontSize: 14, color: Colors.onSurfaceVariant},
   retryBtn: {
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 20,
     backgroundColor: Colors.primary,
   },
-  retryLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-  },
-
-  /* Empty state */
-  emptyWrap: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-
-  /* FAB */
+  retryLabel: {fontSize: 14, fontWeight: '600', color: '#fff'},
+  emptyWrap: {flex: 1, justifyContent: 'center'},
   fab: {
     position: 'absolute',
     right: 20,

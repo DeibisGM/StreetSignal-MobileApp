@@ -1,10 +1,13 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
+import {useLanguage} from '../../../i18n';
 
 export default function NotificationsScreen() {
+  const {t} = useLanguage();
+
   return (
     <View style={styles.container} testID="notifications-screen">
-      <Text style={styles.title}>Notificaciones</Text>
+      <Text style={styles.title}>{t.notifications.title}</Text>
     </View>
   );
 }

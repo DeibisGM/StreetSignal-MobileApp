@@ -2,7 +2,7 @@ import React from 'react';
 import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Camera, ImageBroken, MapPin} from 'phosphor-react-native';
 import {Colors, Spacing} from '../../theme';
-import {REPORT_STATUS_LABELS} from '../../constants';
+import {useLanguage} from '../../i18n';
 import {parseUTCDate} from '../../utils';
 import type {Report, ReportStatus} from '../../types';
 
@@ -44,10 +44,11 @@ function relativeDate(iso: string): string {
 }
 
 export function ReportCard({report, onPress, testID}: ReportCardProps) {
+  const {t} = useLanguage();
   const [imgError, setImgError] = React.useState(false);
 
   const statusStyle = STATUS_STYLES[report.status] ?? STATUS_STYLES.Pending;
-  const statusLabel = REPORT_STATUS_LABELS[report.status] ?? report.status;
+  const statusLabel = t.statusLabels[report.status] ?? report.status;
   const dateStr = relativeDate(report.createdAt);
   const hasLocation = !!(
     report.address ||
@@ -63,7 +64,7 @@ export function ReportCard({report, onPress, testID}: ReportCardProps) {
       activeOpacity={0.78}
       testID={testID ?? `report-card-${report.id}`}
       accessibilityRole="button"
-      accessibilityLabel={`Reporte: ${report.title}. Estado: ${statusLabel}`}>
+      accessibilityLabel={`${report.title}. ${statusLabel}`}>
       {/* ── Thumbnail ─────────────────────────────────────────────── */}
       <View style={styles.thumb}>
         {showImage ? (
@@ -71,7 +72,7 @@ export function ReportCard({report, onPress, testID}: ReportCardProps) {
             source={{uri: report.imageUrl}}
             style={styles.thumbImg}
             resizeMode="cover"
-            accessibilityLabel="Foto del reporte"
+            accessibilityLabel={t.reports.card.photoA11y}
             onError={() => setImgError(true)}
           />
         ) : (
@@ -119,7 +120,7 @@ export function ReportCard({report, onPress, testID}: ReportCardProps) {
           <View style={styles.locationRow}>
             <MapPin size={11} color={Colors.onSurfaceVariant} weight="fill" />
             <Text style={styles.locationText} numberOfLines={1}>
-              {report.address ?? 'Con ubicación'}
+              {report.address ?? t.reports.card.withLocation}
             </Text>
           </View>
         ) : null}

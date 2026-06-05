@@ -2,7 +2,7 @@ import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import {Colors, BorderRadius, Spacing} from '../../theme';
 import {StatusBadge} from '../StatusBadge';
-import {REPORT_STATUS_LABELS} from '../../constants';
+import {useLanguage} from '../../i18n';
 import type {ReportUpdate} from '../../types';
 
 interface UpdateTimelineItemProps {
@@ -22,7 +22,8 @@ export function UpdateTimelineItem({
   isLast = false,
   testID,
 }: UpdateTimelineItemProps) {
-  const timeLabel = new Date(update.createdAt).toLocaleString('es-CO', {
+  const {t} = useLanguage();
+  const timeLabel = new Date(update.createdAt).toLocaleString(t.dateLocale, {
     day: 'numeric',
     month: 'short',
     hour: '2-digit',
@@ -77,7 +78,7 @@ export function UpdateTimelineItem({
           <Text style={styles.systemText}>
             Estado actualizado a{' '}
             {update.newStatus
-              ? REPORT_STATUS_LABELS[update.newStatus] ?? update.newStatus
+              ? t.statusLabels[update.newStatus] ?? update.newStatus
               : '—'}
           </Text>
         ) : null}

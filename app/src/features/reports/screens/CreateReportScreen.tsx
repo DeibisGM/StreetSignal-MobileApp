@@ -109,7 +109,6 @@ export default function CreateReportScreen() {
       }
     })();
 
-
     return () => {
       mounted = false;
       mountedRef.current = false;

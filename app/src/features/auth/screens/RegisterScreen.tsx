@@ -17,22 +17,27 @@ import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {ErrorMessage} from '../../../components/auth/ErrorMessage';
 import {LoadingButton} from '../../../components/auth/LoadingButton';
 import {useRegister, type PasswordStrength} from '../hooks/useRegister';
+import {useLanguage} from '../../../i18n';
 import type {AuthStackParamList} from '../../../navigation/types';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
 
-const STRENGTH_CONFIG: Record<
+function strengthConfig(r: typeof import('../../../i18n').translations.es.auth.register): Record<
   PasswordStrength,
   {label: string; color: string; bars: number}
-> = {
-  none: {label: '', color: '#DDE8F2', bars: 0},
-  weak: {label: 'Debil', color: '#F44336', bars: 1},
-  medium: {label: 'Media', color: '#FF9800', bars: 2},
-  strong: {label: 'Fuerte', color: '#4CAF50', bars: 3},
-};
+> {
+  return {
+    none: {label: '', color: '#DDE8F2', bars: 0},
+    weak: {label: r.strengthWeak, color: '#F44336', bars: 1},
+    medium: {label: r.strengthMedium, color: '#FF9800', bars: 2},
+    strong: {label: r.strengthStrong, color: '#4CAF50', bars: 3},
+  };
+}
 
 export function RegisterScreen() {
   const navigation = useNavigation<Nav>();
+  const {t} = useLanguage();
+  const r = t.auth.register;
   const {
     fullName,
     email,
@@ -60,7 +65,7 @@ export function RegisterScreen() {
     }
   }, [success, navigation]);
 
-  const strength = STRENGTH_CONFIG[passwordStrength];
+  const strength = strengthConfig(r)[passwordStrength];
   const strengthLabelStyle = {color: strength.color};
   const passwordsMatch =
     confirmPassword.length > 0 && confirmPassword === password;
@@ -83,16 +88,14 @@ export function RegisterScreen() {
               style={styles.logoImage}
               resizeMode="contain"
             />
-            <Text style={styles.appName}>StreetSignal</Text>
-            <Text style={styles.tagline}>Plataforma de Reportes Ciudadanos</Text>
+            <Text style={styles.appName}>{t.common.appName}</Text>
+            <Text style={styles.tagline}>{t.common.tagline}</Text>
           </View>
 
           {/* Form card */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Crear cuenta</Text>
-            <Text style={styles.cardSubtitle}>
-              Completa los datos para registrarte
-            </Text>
+            <Text style={styles.cardTitle}>{r.title}</Text>
+            <Text style={styles.cardSubtitle}>{r.subtitle}</Text>
 
             {error ? (
               <View style={styles.errorWrapper}>
@@ -102,7 +105,7 @@ export function RegisterScreen() {
 
             {/* Full name */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Nombre completo</Text>
+              <Text style={styles.fieldLabel}>{r.fullNameLabel}</Text>
               <View
                 style={[
                   styles.inputWrapper,
@@ -111,7 +114,7 @@ export function RegisterScreen() {
                 <Text style={styles.inputPrefix}>A</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Tu nombre completo"
+                  placeholder={r.fullNamePlaceholder}
                   placeholderTextColor="#A0B8D0"
                   value={fullName}
                   onChangeText={setFullName}
@@ -128,7 +131,7 @@ export function RegisterScreen() {
 
             {/* Email */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Correo electronico</Text>
+              <Text style={styles.fieldLabel}>{r.emailLabel}</Text>
               <View
                 style={[
                   styles.inputWrapper,
@@ -137,7 +140,7 @@ export function RegisterScreen() {
                 <Text style={styles.inputPrefix}>@</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="correo@ejemplo.com"
+                  placeholder={r.emailPlaceholder}
                   placeholderTextColor="#A0B8D0"
                   value={email}
                   onChangeText={setEmail}
@@ -156,7 +159,7 @@ export function RegisterScreen() {
 
             {/* Password */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Contrasena</Text>
+              <Text style={styles.fieldLabel}>{r.passwordLabel}</Text>
               <View
                 style={[
                   styles.inputWrapper,
@@ -165,7 +168,7 @@ export function RegisterScreen() {
                 <Text style={styles.inputPrefix}>*</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Minimo 6 caracteres"
+                  placeholder={r.passwordPlaceholder}
                   placeholderTextColor="#A0B8D0"
                   value={password}
                   onChangeText={setPassword}
@@ -181,7 +184,7 @@ export function RegisterScreen() {
                   hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
                   testID="toggle-password">
                   <Text style={styles.eyeText}>
-                    {showPassword ? 'Ocultar' : 'Ver'}
+                    {showPassword ? r.hidePassword : r.showPassword}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -215,7 +218,7 @@ export function RegisterScreen() {
 
             {/* Confirm password */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Confirmar contrasena</Text>
+              <Text style={styles.fieldLabel}>{r.confirmPasswordLabel}</Text>
               <View
                 style={[
                   styles.inputWrapper,
@@ -229,7 +232,7 @@ export function RegisterScreen() {
                 <Text style={styles.inputPrefix}>*</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Repite tu contrasena"
+                  placeholder={r.confirmPasswordPlaceholder}
                   placeholderTextColor="#A0B8D0"
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
@@ -245,7 +248,7 @@ export function RegisterScreen() {
                   hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
                   testID="toggle-confirm-password">
                   <Text style={styles.eyeText}>
-                    {showConfirmPassword ? 'Ocultar' : 'Ver'}
+                    {showConfirmPassword ? r.hidePassword : r.showPassword}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -254,13 +257,13 @@ export function RegisterScreen() {
                   {fieldErrors.confirmPassword}
                 </Text>
               ) : passwordsMatch ? (
-                <Text style={styles.matchText}>Las contrasenas coinciden</Text>
+                <Text style={styles.matchText}>{r.passwordsMatch}</Text>
               ) : null}
             </View>
 
             {/* Submit */}
             <LoadingButton
-              label="Crear cuenta"
+              label={r.submitButton}
               onPress={submit}
               loading={loading}
               testID="submit-button"
@@ -276,9 +279,9 @@ export function RegisterScreen() {
 
             {/* Login link */}
             <View style={styles.loginRow}>
-              <Text style={styles.loginText}>Ya tienes cuenta? </Text>
+              <Text style={styles.loginText}>{r.hasAccount}</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Login')} testID="go-to-login">
-                <Text style={styles.loginLink}>Inicia sesion</Text>
+                <Text style={styles.loginLink}>{r.login}</Text>
               </TouchableOpacity>
             </View>
           </View>

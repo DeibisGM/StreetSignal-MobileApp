@@ -1,26 +1,61 @@
-import {AuthResponse, User} from '../types';
+import {AuthResponse, User, UserRole} from '../types';
 import {storageService} from '../storage';
 import {apiClient} from './client';
-import {ENDPOINTS} from './endpoints';
+import {BASE_URL, ENDPOINTS} from './endpoints';
 import {sessionManager} from './sessionManager';
 import {LoginRequest, RegisterRequest} from './types';
 
+// The backend may send role as a number (0 = citizen, ≥1 = staff) or a string
+// with any casing ('staff', 'Staff', 'admin', etc.).
+interface RawUser {
+  id: string;
+  fullName: string;
+  email: string;
+  phone?: string;
+  role: number | string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+interface RawAuthResponse {
+  token: string;
+  tokenType?: string;
+  expiresIn?: number;
+  user: RawUser;
+}
+
+function mapRole(raw: number | string): UserRole {
+  if (typeof raw === 'string') {
+    const lower = raw.toLowerCase();
+    return lower === 'staff' || lower === 'admin' ? 'staff' : 'citizen';
+  }
+  return raw >= 1 ? 'staff' : 'citizen';
+}
+
+function mapUser(raw: RawUser): User {
+  return {
+    id: raw.id,
+    fullName: raw.fullName,
+    email: raw.email,
+    phone: raw.phone,
+    role: mapRole(raw.role),
+    isActive: raw.isActive,
+    createdAt: raw.createdAt,
+  };
+}
+
 export const authService = {
   register: async (data: RegisterRequest): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>(
-      ENDPOINTS.auth.register,
-      data,
-    );
+    const raw = await apiClient.post<RawAuthResponse>(ENDPOINTS.auth.register, data);
+    const response: AuthResponse = {token: raw.token, user: mapUser(raw.user)};
     sessionManager.setSession(response.token, response.user);
     storageService.saveSession(response.token, response.user).catch(() => {});
     return response;
   },
 
   login: async (data: LoginRequest): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>(
-      ENDPOINTS.auth.login,
-      data,
-    );
+    const raw = await apiClient.post<RawAuthResponse>(ENDPOINTS.auth.login, data);
+    const response: AuthResponse = {token: raw.token, user: mapUser(raw.user)};
     sessionManager.setSession(response.token, response.user);
     storageService.saveSession(response.token, response.user).catch(() => {});
     return response;
@@ -42,9 +77,18 @@ export const authService = {
   },
 
   logout: (): void => {
+    const token = sessionManager.getToken();
     sessionManager.clearSession();
     storageService.clearSession().catch(() => {});
-    // Best-effort server-side invalidation — not awaited because JWT is stateless.
-    apiClient.post<void>(ENDPOINTS.auth.logout, {}).catch(() => {});
+    // Best-effort server-side invalidation. Raw fetch (not apiClient) avoids
+    // the 401 interceptor triggering a second logout if the server rejects the
+    // token, which could race with a fresh login and kick the user out again.
+    if (token) {
+      fetch(`${BASE_URL}${ENDPOINTS.auth.logout}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', Authorization: `Bearer ${token}`},
+        body: '{}',
+      }).catch(() => {});
+    }
   },
 };

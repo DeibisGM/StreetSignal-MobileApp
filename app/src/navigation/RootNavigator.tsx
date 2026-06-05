@@ -1,8 +1,8 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {User} from '../types';
-import {storageService} from '../storage';
-import {sessionManager} from '../api/sessionManager';
 import {authService} from '../api/authService';
+import {sessionManager} from '../api/sessionManager';
+import {storageService} from '../storage';
 import {AuthContext, AuthContextValue} from './AuthContext';
 import AuthNavigator from './AuthNavigator';
 import AppNavigator from './AppNavigator';
@@ -14,9 +14,12 @@ const RESTORE_TIMEOUT_MS = 3_000;
 export default function RootNavigator() {
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [user, setUser] = useState<User | null>(null);
+  // Ref para saber si login() fue llamado antes de que termine restoreSession
+  const loginCalledRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    loginCalledRef.current = false;
 
     const timeout = new Promise<null>(resolve =>
       setTimeout(() => resolve(null), RESTORE_TIMEOUT_MS),
@@ -25,22 +28,23 @@ export default function RootNavigator() {
     Promise.race([authService.restoreSession(), timeout])
       .then(result => {
         if (cancelled) return;
+        // Si login() ya fue llamado (usuario logueó antes de que
+        // terminara la restauración), no pisamos el estado.
+        if (loginCalledRef.current) return;
+
         if (result) {
           sessionManager.setSession(result.token, result.user);
           setUser(result.user);
           setStatus('authenticated');
         } else {
-          // No stored session — only move to unauthenticated if login hasn't
-          // already updated the status (race: slow Keychain vs fast login).
-          setStatus(prev => (prev === 'loading' ? 'unauthenticated' : prev));
+          setStatus('unauthenticated');
         }
       })
       .catch(() => {
-        if (cancelled) return;
-        // Token was present but /auth/me rejected it — clear everything.
+        if (cancelled || loginCalledRef.current) return;
         sessionManager.clearSession();
         storageService.clearSession().catch(() => {});
-        setStatus(prev => (prev === 'loading' ? 'unauthenticated' : prev));
+        setStatus('unauthenticated');
       });
 
     return () => {
@@ -49,13 +53,13 @@ export default function RootNavigator() {
   }, []);
 
   const login = useCallback((loggedUser: User) => {
+    loginCalledRef.current = true;
     setUser(loggedUser);
     setStatus('authenticated');
   }, []);
 
-  const logout = useCallback(() => {
-    sessionManager.clearSession();
-    storageService.clearSession().catch(() => {});
+  const logout = useCallback(async () => {
+    await authService.logout();
     setUser(null);
     setStatus('unauthenticated');
   }, []);
@@ -73,7 +77,9 @@ export default function RootNavigator() {
 
   return (
     <AuthContext.Provider value={contextValue}>
-      {status === 'authenticated' ? <AppNavigator /> : <AuthNavigator initialLoading={status === 'loading'} />}
+      {status === 'authenticated'
+        ? <AppNavigator />
+        : <AuthNavigator initialLoading={status === 'loading'} />}
     </AuthContext.Provider>
   );
 }

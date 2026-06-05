@@ -8,6 +8,7 @@ import {reportsService} from '../../../api/reportsService';
 import {ApiError} from '../../../api/types';
 import {useAuth} from '../../../navigation/AuthContext';
 import {storageService} from '../../../storage';
+import {useLanguage} from '../../../i18n';
 import {BorderRadius, Colors, Spacing} from '../../../theme';
 import {ReportDetailView} from '../components/ReportDetailView';
 import {HomeStackParamList} from '../../../navigation/types';
@@ -15,11 +16,6 @@ import type {Report} from '../../../types';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'ReportDetail'>;
 
-/**
- * The server tells us "this isn't your report" via either a 403 (auth ok,
- * ownership missing) or a 404 (don't reveal it exists). Both should land
- * on the same "no tenés permisos" screen from the citizen's perspective.
- */
 function isForbidden(err: unknown): boolean {
   return err instanceof ApiError && (err.statusCode === 403 || err.statusCode === 404);
 }
@@ -30,6 +26,8 @@ function isNetworkError(err: unknown): boolean {
 
 export default function ReportDetailScreen({route, navigation}: Props) {
   const {user} = useAuth();
+  const {t} = useLanguage();
+  const rd = t.reports.detail;
   const reportId = route.params.reportId;
 
   const [report, setReport] = useState<Report | null>(null);
@@ -38,18 +36,8 @@ export default function ReportDetailScreen({route, navigation}: Props) {
   const [forbidden, setForbidden] = useState(false);
   const [offline, setOffline] = useState(false);
   const mountedRef = useRef(false);
-  /**
-   * Tracks whether we already had a report on screen when the refresh
-   * kicked off. Used to decide between "loading spinner" and "soft
-   * background refresh" so the cached view stays visible.
-   */
   const hasCachedRef = useRef(false);
 
-  /**
-   * Pull the cached detail (if any) from AsyncStorage. Synchronously
-   * seeds the screen state so the citizen sees their last view
-   * instantly, even before the first network byte arrives.
-   */
   const hydrateFromCache = useCallback(async () => {
     try {
       const cached = await storageService.getReportDetailCache(reportId);
@@ -73,14 +61,9 @@ export default function ReportDetailScreen({route, navigation}: Props) {
         return;
       }
 
-      // Permission check: a citizen may only see reports they own.
-      // The API should already enforce this, but we double-check so a
-      // misconfigured backend or a stale link can't leak another
-      // citizen's data.
       if (user && user.role === 'citizen' && data.createdById !== user.id) {
         setForbidden(true);
         setReport(null);
-        // Drop the (potentially sensitive) cached copy.
         storageService.clearReportDetailCache(reportId).catch(() => {});
         return;
       }
@@ -90,8 +73,6 @@ export default function ReportDetailScreen({route, navigation}: Props) {
       setOffline(false);
       hasCachedRef.current = true;
 
-      // Persist for the next visit. Fire-and-forget; the UI is already
-      // showing the fresh data.
       storageService.saveReportDetailCache(reportId, data).catch(() => {});
     } catch (err) {
       if (!mountedRef.current) {
@@ -105,8 +86,6 @@ export default function ReportDetailScreen({route, navigation}: Props) {
         return;
       }
 
-      // Network problem + we already had a cached view → show it
-      // with the offline banner instead of a hard error.
       if (isNetworkError(err) && hasCachedRef.current) {
         setOffline(true);
         setError(null);
@@ -114,29 +93,23 @@ export default function ReportDetailScreen({route, navigation}: Props) {
       }
 
       setError(
-        err instanceof ApiError
-          ? err.message
-          : 'No se pudo cargar el detalle del reporte.',
+        err instanceof ApiError ? err.message : rd.loadError,
       );
     } finally {
       if (mountedRef.current) {
         setLoading(false);
       }
     }
-  }, [reportId, user]);
+  }, [reportId, user, rd.loadError]);
 
   useEffect(() => {
     mountedRef.current = true;
 
-    // Sequence matters: we hydrate the cache *first*, then kick off
-    // the network refresh. That way the API failure handler can look
-    // at `hasCachedRef` and decide between "show offline banner" and
-    // "show hard error" without a race.
     (async () => {
       try {
         await hydrateFromCache();
       } catch {
-        // Cache read failures are non-fatal — the API call still runs.
+        // non-fatal
       } finally {
         if (mountedRef.current) {
           setLoading(false);
@@ -145,29 +118,21 @@ export default function ReportDetailScreen({route, navigation}: Props) {
       try {
         await loadReport();
       } catch {
-        // loadReport handles its own errors; this catch is just so an
-        // unhandled promise rejection doesn't surface.
+        // loadReport handles its own errors
       }
     })();
 
     return () => {
       mountedRef.current = false;
     };
-    // hydrateFromCache & loadReport are recreated on each render via
-    // useCallback([reportId, user]); route.params.reportId and the
-    // logged-in user id are the only inputs that should trigger a
-    // re-fetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportId, user?.id]);
 
   function goHome() {
-    // Pop back to Home. We deliberately avoid `navigation.popTo('Home')`
-    // because the citizen might have arrived here from MyReports instead.
     if (navigation.canGoBack()) {
       navigation.goBack();
       return;
     }
-    // No back stack (e.g. deep-linked in): jump to the Home tab.
     const parent = navigation.getParent();
     if (parent) {
       parent.navigate('HomeTab', {screen: 'Home'});
@@ -194,7 +159,7 @@ export default function ReportDetailScreen({route, navigation}: Props) {
     return (
       <View style={styles.center} testID="report-detail-loading">
         <ActivityIndicator color={Colors.primary} />
-        <Text style={styles.centerText}>Cargando reporte...</Text>
+        <Text style={styles.centerText}>{rd.loading}</Text>
       </View>
     );
   }
@@ -203,7 +168,7 @@ export default function ReportDetailScreen({route, navigation}: Props) {
     return (
       <View style={styles.center} testID="report-detail-error">
         <ErrorMessage message={error} />
-        <LoadingButton label="Reintentar" onPress={loadReport} />
+        <LoadingButton label={rd.retry} onPress={loadReport} />
         <TouchableOpacity
           style={styles.softBackLink}
           onPress={goHome}
