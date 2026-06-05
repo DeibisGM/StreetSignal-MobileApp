@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {AuthContext} from '../../../navigation/AuthContext';
 import {reportsService} from '../../../api/reportsService';
+/* eslint-disable react-hooks/exhaustive-deps */
 
 jest.mock('../../../api/reportsService');
 jest.mock('@react-navigation/native', () => ({
