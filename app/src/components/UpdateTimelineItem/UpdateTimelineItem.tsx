@@ -13,8 +13,8 @@ interface UpdateTimelineItemProps {
 }
 
 /**
- * Timeline entry for a report's activity log.
- * Status-change updates show old → new badge transition;
+ * Timeline entry for a report activity log.
+ * Status changes show old -> new badge transitions;
  * comments and system messages show plain text.
  */
 export function UpdateTimelineItem({
@@ -30,13 +30,16 @@ export function UpdateTimelineItem({
   });
 
   const isStatusChange = update.type === 'status_change';
+  const contentStyle = [
+    styles.content,
+    update.isOfficial && styles.contentOfficial,
+  ];
 
   return (
     <View
       style={styles.container}
       testID={testID ?? `timeline-item-${update.id}`}
       accessibilityRole="text">
-      {/* Connector column */}
       <View style={styles.connectorCol}>
         <View
           style={[
@@ -47,10 +50,14 @@ export function UpdateTimelineItem({
         {!isLast && <View style={styles.line} />}
       </View>
 
-      {/* Content */}
-      <View style={styles.content}>
+      <View style={contentStyle}>
         <View style={styles.header}>
           <Text style={styles.author}>{update.createdByName}</Text>
+          {update.isOfficial ? (
+            <View style={styles.officialBadge}>
+              <Text style={styles.officialBadgeText}>Oficial</Text>
+            </View>
+          ) : null}
           <Text style={styles.time}>{timeLabel}</Text>
         </View>
 
@@ -69,7 +76,9 @@ export function UpdateTimelineItem({
         {update.type === 'system' && !update.message ? (
           <Text style={styles.systemText}>
             Estado actualizado a{' '}
-            {update.newStatus ? REPORT_STATUS_LABELS[update.newStatus] ?? update.newStatus : '—'}
+            {update.newStatus
+              ? REPORT_STATUS_LABELS[update.newStatus] ?? update.newStatus
+              : '—'}
           </Text>
         ) : null}
       </View>
@@ -83,6 +92,7 @@ const styles = StyleSheet.create({
     paddingLeft: Spacing.marginPage,
     paddingRight: Spacing.marginPage,
     minHeight: 56,
+    alignItems: 'flex-start',
   },
   connectorCol: {
     width: 24,
@@ -111,26 +121,55 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    minWidth: 0,
     paddingBottom: Spacing.stackMd,
     gap: 6,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  contentOfficial: {
+    backgroundColor: '#F8FBFF',
+    borderColor: '#D6E7FF',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   author: {
     fontSize: 13,
     fontWeight: '600',
     color: Colors.onSurface,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  officialBadge: {
+    backgroundColor: Colors.primaryFixed,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    flexShrink: 0,
+  },
+  officialBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.primary,
+    letterSpacing: 0.3,
   },
   time: {
     fontSize: 11,
     color: Colors.outline,
+    marginLeft: 0,
+    flexShrink: 0,
   },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 8,
   },
   arrow: {
@@ -141,10 +180,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: Colors.onSurfaceVariant,
+    flexShrink: 1,
   },
   systemText: {
     fontSize: 13,
     color: Colors.outline,
     fontStyle: 'italic',
+    flexShrink: 1,
   },
 });

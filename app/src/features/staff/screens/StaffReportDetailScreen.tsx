@@ -1,34 +1,294 @@
-import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+
+import {
+  AppTextInput,
+  ErrorMessage,
+  LoadingButton,
+  StatusBadge,
+  SuccessToast,
+} from '../../../components';
+import {reportsService} from '../../../api/reportsService';
+import {ApiError} from '../../../api/types';
+import {REPORT_STATUSES} from '../../../constants';
+import {Colors, BorderRadius, Spacing} from '../../../theme';
+import {statusLabel} from '../../../utils';
 import {StaffStackParamList} from '../../../navigation/types';
+import type {Report, ReportStatus} from '../../../types';
+import {ReportDetailView} from '../../reports/components/ReportDetailView';
 
 type Props = NativeStackScreenProps<StaffStackParamList, 'StaffReportDetail'>;
 
+const MESSAGE_MAX_LENGTH = 500;
+
+function isValidStatus(value: ReportStatus | null): value is ReportStatus {
+  return value !== null && REPORT_STATUSES.includes(value);
+}
+
 export default function StaffReportDetailScreen({route}: Props) {
+  const [report, setReport] = useState<Report | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [screenError, setScreenError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<ReportStatus | null>(
+    null,
+  );
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const mountedRef = useRef(false);
+
+  async function loadReport() {
+    setLoading(true);
+    setScreenError(null);
+    try {
+      const data = await reportsService.getReport(route.params.reportId);
+      if (mountedRef.current) {
+        setReport(data);
+        setSelectedStatus(data.status);
+      }
+    } catch (err) {
+      if (mountedRef.current) {
+        setScreenError(
+          err instanceof ApiError
+            ? err.message
+            : 'No se pudo cargar el detalle del reporte.',
+        );
+      }
+    } finally {
+      if (mountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }
+
+  useEffect(() => {
+    mountedRef.current = true;
+    loadReport().catch(() => {});
+
+    return () => {
+      mountedRef.current = false;
+    };
+    // loadReport is recreated on each render, so we intentionally run only once per route id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route.params.reportId]);
+
+  async function refreshAfterAction() {
+    await loadReport();
+  }
+
+  async function handleSubmit() {
+    if (!report || submitting) {
+      return;
+    }
+
+    const trimmedMessage = message.trim();
+    if (!trimmedMessage) {
+      setActionError('El mensaje no puede estar vacío.');
+      return;
+    }
+    if (trimmedMessage.length > MESSAGE_MAX_LENGTH) {
+      setActionError('El mensaje no puede exceder 500 caracteres.');
+      return;
+    }
+    if (!isValidStatus(selectedStatus)) {
+      setActionError('Selecciona un estado válido.');
+      return;
+    }
+
+    setSubmitting(true);
+    setActionError(null);
+
+    try {
+      if (selectedStatus !== report.status) {
+        await reportsService.updateReportStatus(report.id, {
+          newStatus: selectedStatus,
+          message: trimmedMessage,
+        });
+        setToastMessage('Estado actualizado correctamente.');
+      } else {
+        await reportsService.addReportUpdate(report.id, {
+          message: trimmedMessage,
+        });
+        setToastMessage('Comentario agregado correctamente.');
+      }
+
+      setMessage('');
+      await refreshAfterAction();
+    } catch (err) {
+      setActionError(
+        err instanceof ApiError ? err.message : 'No se pudo actualizar el reporte.',
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loading && !report) {
+    return (
+      <View style={styles.center} testID="staff-report-detail-loading">
+        <Text style={styles.centerText}>Cargando detalle...</Text>
+      </View>
+    );
+  }
+
+  if (screenError && !report) {
+    return (
+      <View style={styles.center} testID="staff-report-detail-error">
+        <ErrorMessage message={screenError} />
+        <LoadingButton label="Reintentar" onPress={loadReport} />
+      </View>
+    );
+  }
+
+  if (!report) {
+    return null;
+  }
+
+  const isBusy = loading || submitting;
+
   return (
-    <View style={styles.container} testID="staff-report-detail-screen">
-      <Text style={styles.title}>Detalle (Staff)</Text>
-      <Text style={styles.id}>{route.params.reportId}</Text>
+    <View style={styles.root} testID="staff-report-detail-screen">
+      <SuccessToast
+        message={toastMessage}
+        onDismiss={() => setToastMessage(null)}
+      />
+
+      <ReportDetailView report={report}>
+        <View style={styles.panel}>
+          <Text style={styles.panelTitle}>Acciones de staff</Text>
+          <Text style={styles.panelSubtitle}>
+            El cambio de estado y el comentario quedan registrados en la línea
+            de tiempo.
+          </Text>
+
+          <View style={styles.currentStatusRow}>
+            <Text style={styles.currentStatusLabel}>Estado actual</Text>
+            <StatusBadge status={report.status} />
+          </View>
+
+          <View style={styles.selectorGrid}>
+            {REPORT_STATUSES.map(status => {
+              const selected = selectedStatus === status;
+              return (
+                <TouchableOpacity
+                  key={status}
+                  style={[
+                    styles.selectorChip,
+                    selected && styles.selectorChipSelected,
+                  ]}
+                  onPress={() => {
+                    if (isBusy) {
+                      return;
+                    }
+                    setSelectedStatus(status);
+                    setActionError(null);
+                  }}
+                  disabled={isBusy}
+                  activeOpacity={0.8}
+                  accessibilityRole="radio"
+                  accessibilityState={{selected, disabled: isBusy}}
+                  accessibilityLabel={statusLabel(status)}
+                  testID={`status-option-${status}`}>
+                  <StatusBadge status={status} />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <AppTextInput
+            label="Mensaje"
+            placeholder="Describe el avance o la razón del cambio"
+            value={message}
+            onChangeText={text => {
+              setMessage(text);
+              if (actionError) {
+                setActionError(null);
+              }
+            }}
+            editable={!isBusy}
+            multiline
+            numberOfLines={4}
+            maxLength={MESSAGE_MAX_LENGTH}
+            helperText="Obligatorio. Máximo 500 caracteres."
+            testID="staff-message-input"
+          />
+
+          <ErrorMessage message={actionError} testID="staff-action-error" />
+
+          <LoadingButton
+            label="Actualizar"
+            onPress={handleSubmit}
+            loading={submitting}
+            disabled={loading}
+            testID="staff-update-button"
+          />
+        </View>
+      </ReportDetailView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
+    backgroundColor: Colors.background,
+  },
+  center: {
+    flex: 1,
+    backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: Spacing.marginPage,
+    gap: Spacing.stackMd,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1A3C5E',
-  },
-  id: {
+  centerText: {
     fontSize: 14,
-    color: '#5A7A99',
-    marginTop: 8,
+    color: Colors.onSurfaceVariant,
+  },
+  panel: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: BorderRadius.xxl,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: Spacing.gutter,
+    gap: Spacing.stackMd,
+  },
+  panelTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.onSurface,
+  },
+  panelSubtitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.onSurfaceVariant,
+  },
+  currentStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  currentStatusLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.onSurfaceVariant,
+  },
+  selectorGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  selectorChip: {
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    padding: 2,
+  },
+  selectorChipSelected: {
+    borderColor: Colors.primary,
+    backgroundColor: '#EEF4FF',
   },
 });

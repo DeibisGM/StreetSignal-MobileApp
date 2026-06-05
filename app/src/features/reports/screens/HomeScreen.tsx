@@ -2,14 +2,17 @@ import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useAuth} from '../../../navigation/AuthContext';
 import {Colors, Spacing, BorderRadius, Typography} from '../../../theme';
-import type {AppTabParamList} from '../../../navigation/types';
+import type {AppTabParamList, HomeStackParamList} from '../../../navigation/types';
 
-type Nav = BottomTabNavigationProp<AppTabParamList>;
+type Nav = NativeStackNavigationProp<HomeStackParamList>;
+type TabNav = BottomTabNavigationProp<AppTabParamList>;
 
 export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
+  const parentNavigation = navigation.getParent<TabNav>();
   const {user} = useAuth();
 
   return (
@@ -23,13 +26,23 @@ export default function HomeScreen() {
 
       <TouchableOpacity
         style={styles.createButton}
-        onPress={() => navigation.navigate('CreateReport')}
+        onPress={() => parentNavigation?.navigate('CreateReport')}
         activeOpacity={0.85}
         accessibilityRole="button"
         accessibilityLabel="Crear nuevo reporte">
         <Text style={styles.createButtonIcon}>📋</Text>
         <Text style={styles.createButtonLabel}>Crear reporte</Text>
         <Text style={styles.createButtonSub}>Foto + ubicación + descripción</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.reportsButton}
+        onPress={() => navigation.navigate('MyReports')}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Ver mis reportes">
+        <Text style={styles.reportsButtonLabel}>Mis reportes</Text>
+        <Text style={styles.reportsButtonSub}>Revisa el estado y el historial</Text>
       </TouchableOpacity>
     </View>
   );
@@ -74,5 +87,24 @@ const styles = StyleSheet.create({
   createButtonSub: {
     fontSize: 13,
     color: 'rgba(255,255,255,0.75)',
+  },
+  reportsButton: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: BorderRadius.card,
+    paddingVertical: Spacing.stackMd,
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#D7E1F0',
+  },
+  reportsButtonLabel: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.onSurface,
+  },
+  reportsButtonSub: {
+    fontSize: 13,
+    color: Colors.onSurfaceVariant,
   },
 });

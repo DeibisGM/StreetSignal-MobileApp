@@ -1,4 +1,4 @@
-import {ReportStatus, ReportUpdateType} from '../types';
+import {ReportStatus} from '../types';
 
 export class ApiError extends Error {
   constructor(
@@ -47,7 +47,7 @@ export interface UpdateReportRequest {
 }
 
 export interface UpdateReportStatusRequest {
-  status: ReportStatus;
+  newStatus: ReportStatus;
   message?: string;
 }
 
@@ -63,9 +63,7 @@ export interface StaffReportFilters {
 
 // --- Report Update DTOs ---
 export interface CreateReportUpdateRequest {
-  updateType: ReportUpdateType;
   message: string;
-  newStatus?: ReportStatus;
 }
 
 // --- Notification DTOs ---

@@ -7,6 +7,7 @@ import {AppTabParamList, HomeStackParamList, StaffStackParamList} from './types'
 import {useAuth} from './AuthContext';
 
 import HomeScreen from '../features/reports/screens/HomeScreen';
+import MyReportsScreen from '../features/reports/screens/MyReportsScreen';
 import ReportDetailScreen from '../features/reports/screens/ReportDetailScreen';
 import CreateReportScreen from '../features/reports/screens/CreateReportScreen';
 import StaffReportsListScreen from '../features/staff/screens/StaffReportsListScreen';
@@ -31,6 +32,11 @@ function HomeStackNavigator() {
         name="Home"
         component={HomeScreen}
         options={{title: 'Inicio'}}
+      />
+      <HomeStack.Screen
+        name="MyReports"
+        component={MyReportsScreen}
+        options={{title: 'Mis reportes'}}
       />
       <HomeStack.Screen
         name="ReportDetail"

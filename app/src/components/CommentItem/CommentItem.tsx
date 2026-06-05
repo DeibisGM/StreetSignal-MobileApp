@@ -83,6 +83,7 @@ const styles = StyleSheet.create({
   },
   bubble: {
     flex: 1,
+    minWidth: 0,
     backgroundColor: '#FFFFFF',
     borderRadius: BorderRadius.lg,
     padding: 12,
@@ -100,12 +101,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: Colors.onSurface,
+    flexShrink: 1,
+    minWidth: 0,
   },
   officialBadge: {
     backgroundColor: Colors.primaryFixed,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: BorderRadius.full,
+    flexShrink: 0,
   },
   officialBadgeText: {
     fontSize: 10,
@@ -114,13 +118,15 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   timestamp: {
-    marginLeft: 'auto',
+    marginLeft: 0,
     fontSize: 11,
     color: Colors.outline,
+    flexShrink: 0,
   },
   message: {
     fontSize: 14,
     lineHeight: 20,
     color: Colors.onSurface,
+    flexShrink: 1,
   },
 });

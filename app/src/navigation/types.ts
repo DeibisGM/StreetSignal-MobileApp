@@ -12,6 +12,7 @@ export type AuthStackParamList = {
 
 export type HomeStackParamList = {
   Home: undefined;
+  MyReports: undefined;
   ReportDetail: {reportId: string};
 };
 
