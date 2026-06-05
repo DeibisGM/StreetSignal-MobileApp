@@ -8,6 +8,7 @@ export { ErrorMessage } from './ErrorMessage';
 export { ImagePickerField } from './ImagePickerField';
 export { LoadingButton } from './LoadingButton';
 export { LocationField } from './LocationField';
+export { LogoMark } from './LogoMark';
 export { ReportCard } from './ReportCard';
 export { StatusBadge } from './StatusBadge';
 export { UpdateTimelineItem } from './UpdateTimelineItem';

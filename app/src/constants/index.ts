@@ -1,8 +1,10 @@
-﻿import { Platform } from 'react-native';
+import { Platform } from 'react-native';
 
 function getDevApiBaseUrl(): string {
   if (Platform.OS === 'android') {
-    return 'http://192.168.0.106:5000/api';
+    // Physical device on LAN — use your PC's LAN IP.
+    // Update this if your router/dhcp changes the IP.
+    return 'http://192.168.0.213:5000/api';
   }
 
   if (Platform.OS === 'web') {

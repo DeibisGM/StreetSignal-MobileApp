@@ -6,6 +6,8 @@ import type {ReportStatus} from '../../types';
 
 interface StatusBadgeProps {
   status: ReportStatus;
+  /** 'default' = compact pill. 'prominent' = larger, bolder, more eye-catching. */
+  size?: 'default' | 'prominent';
   testID?: string;
 }
 
@@ -20,18 +22,33 @@ const STATUS_STYLES: Record<ReportStatus, StatusStyle> = {
   Rejected:   {bg: '#FEE2E2', color: '#DC2626'},
 };
 
-export function StatusBadge({status, testID}: StatusBadgeProps) {
+export function StatusBadge({status, size = 'default', testID}: StatusBadgeProps) {
   const {t} = useLanguage();
   const {bg, color} = STATUS_STYLES[status] ?? STATUS_STYLES.Pending;
   const label = t.statusLabels[status] ?? status;
+  const prominent = size === 'prominent';
 
   return (
     <View
       testID={testID ?? `status-badge-${status}`}
       accessibilityLabel={`Estado: ${label}`}
-      style={[styles.pill, {backgroundColor: bg}]}>
-      <View style={[styles.dot, {backgroundColor: color}]} />
-      <Text style={[styles.label, {color}]}>{label}</Text>
+      style={[
+        prominent ? styles.pillProminent : styles.pill,
+        {backgroundColor: bg},
+      ]}>
+      <View
+        style={[
+          prominent ? styles.dotProminent : styles.dot,
+          {backgroundColor: color},
+        ]}
+      />
+      <Text
+        style={[
+          prominent ? styles.labelProminent : styles.label,
+          {color},
+        ]}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -46,7 +63,21 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     gap: 5,
   },
+  pillProminent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: BorderRadius.full,
+    alignSelf: 'flex-start',
+    gap: 5,
+  },
   dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  dotProminent: {
     width: 6,
     height: 6,
     borderRadius: 3,
@@ -55,5 +86,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     lineHeight: 16,
+  },
+  labelProminent: {
+    fontSize: 11,
+    fontWeight: '700',
+    lineHeight: 16,
+    letterSpacing: 0.2,
   },
 });

@@ -103,7 +103,6 @@ export default function MyReportsScreen(_props: Props) {
     <View style={styles.root} testID="my-reports-screen">
       <View style={styles.header}>
         <Text style={styles.title}>{mr.title}</Text>
-        <Text style={styles.subtitle}>{mr.subtitle}</Text>
       </View>
 
       <FlatList

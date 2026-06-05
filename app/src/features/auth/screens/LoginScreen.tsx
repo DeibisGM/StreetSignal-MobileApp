@@ -65,7 +65,7 @@ export function LoginScreen({successMessage, onDismissSuccess}: Props) {
 
           {/* Header */}
           <View style={styles.header}>
-            <AppLogo size={68} />
+            <AppLogo size={52} />
             <Text style={styles.appName}>{t.common.appName}</Text>
             <Text style={styles.tagline}>{t.common.tagline}</Text>
           </View>

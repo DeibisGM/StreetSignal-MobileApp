@@ -264,16 +264,12 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: Colors.onSurfaceVariant,
   },
-  currentStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  currentStatusLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+  selectorLabel: {
+    fontSize: 12,
+    fontWeight: '700',
     color: Colors.onSurfaceVariant,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   selectorGrid: {
     flexDirection: 'row',
