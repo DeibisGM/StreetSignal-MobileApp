@@ -10,9 +10,12 @@ export const categoriesService = {
     const res = await apiClient.get<Category[] | {data: Category[]}>(
       ENDPOINTS.categories,
     );
-    if (Array.isArray(res)) {
-      return res;
-    }
-    return Array.isArray(res?.data) ? res.data : [];
+    const items = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+    // Sort by sortOrder when available (exposed by backend), keeping "otro" last.
+    return [...items].sort((a, b) => {
+      const ao = a.sortOrder ?? (a.slug === 'otro' ? 999 : 500);
+      const bo = b.sortOrder ?? (b.slug === 'otro' ? 999 : 500);
+      return ao !== bo ? ao - bo : a.name.localeCompare(b.name);
+    });
   },
 };

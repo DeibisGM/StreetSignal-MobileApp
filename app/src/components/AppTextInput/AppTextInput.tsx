@@ -19,7 +19,7 @@ export function AppTextInput({
   const hasError = !!error;
   const isDisabled = editable === false;
 
-  const borderColor = hasError ? Colors.error : focused ? Colors.primary : '#9CA3AF';
+  const borderColor = hasError ? Colors.error : focused ? Colors.primary : Colors.outlineVariant;
   const bgColor = isDisabled ? '#F1F5F9' : '#FFFFFF';
 
   return (
