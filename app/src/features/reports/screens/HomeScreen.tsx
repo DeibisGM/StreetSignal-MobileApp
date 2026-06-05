@@ -138,7 +138,9 @@ export default function HomeScreen() {
             <ReportCard
               key={report.id}
               report={report}
-              onPress={() => navigation.navigate('ReportDetail', {reportId: report.id})}
+              onPress={() =>
+                navigation.navigate('ReportDetail', {reportId: report.id})
+              }
               testID={`home-report-card-${report.id}`}
             />
           ))
