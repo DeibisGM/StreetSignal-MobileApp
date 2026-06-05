@@ -1,8 +1,9 @@
 import React from 'react';
 import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {MapPin} from 'phosphor-react-native';
+import {Camera, ImageBroken, MapPin} from 'phosphor-react-native';
 import {Colors, BorderRadius, Spacing} from '../../theme';
 import {REPORT_STATUS_LABELS} from '../../constants';
+import {formatDate} from '../../utils';
 import type {Report, ReportStatus} from '../../types';
 
 interface ReportCardProps {
@@ -12,11 +13,11 @@ interface ReportCardProps {
 }
 
 export function ReportCard({report, onPress, testID}: ReportCardProps) {
-  const formattedDate = new Date(report.createdAt).toLocaleDateString('es-CO', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  });
+  const dateStr = formatDate(report.createdAt);
   const statusStyle = STATUS_STYLES[report.status] ?? STATUS_STYLES.Pending;
   const statusLabel = REPORT_STATUS_LABELS[report.status] ?? report.status;
+  const hasLocation = !!(report.address || (report.latitude && report.longitude));
+  const showImage = !!report.imageUrl;
 
   return (
     <TouchableOpacity
@@ -26,18 +27,22 @@ export function ReportCard({report, onPress, testID}: ReportCardProps) {
       testID={testID ?? `report-card-${report.id}`}
       accessibilityRole="button"
       accessibilityLabel={`Reporte: ${report.title}. Estado: ${report.status}`}>
-      {/* Thumbnail */}
       <View style={styles.thumbnailWrapper}>
-        {report.imageUrl ? (
+        {showImage ? (
           <Image
             source={{uri: report.imageUrl}}
             style={styles.thumbnail}
             resizeMode="cover"
             accessibilityLabel="Foto del reporte"
+            onError={() => {}}
           />
         ) : (
           <View style={styles.thumbnailPlaceholder}>
-            <MapPin size={24} color="#94A3B8" weight="light" />
+            {report.imageUrl ? (
+              <ImageBroken size={24} color="#94A3B8" weight="light" />
+            ) : (
+              <Camera size={24} color="#94A3B8" weight="light" />
+            )}
           </View>
         )}
         <View style={[styles.status, {backgroundColor: statusStyle.bg}]}>
@@ -47,14 +52,21 @@ export function ReportCard({report, onPress, testID}: ReportCardProps) {
         </View>
       </View>
 
-      {/* Content */}
       <View style={styles.content}>
         <Text style={styles.category} numberOfLines={1}>{report.category}</Text>
         <Text style={styles.title} numberOfLines={2}>{report.title}</Text>
         <Text style={styles.author} numberOfLines={1}>
           {report.createdByName}
         </Text>
-        <Text style={styles.date}>{formattedDate}</Text>
+        {hasLocation ? (
+          <View style={styles.locationRow}>
+            <MapPin size={11} color={Colors.onSurfaceVariant} weight="fill" />
+            <Text style={styles.locationText} numberOfLines={1}>
+              {report.address ?? 'Con ubicación'}
+            </Text>
+          </View>
+        ) : null}
+        <Text style={styles.date}>{dateStr}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -147,9 +159,19 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     fontWeight: '500',
   },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  locationText: {
+    flex: 1,
+    fontSize: 11,
+    color: Colors.onSurfaceVariant,
+  },
   date: {
-    fontSize: 12,
-    color: '#64748B',
+    fontSize: 11,
+    color: Colors.outline,
     lineHeight: 16,
     marginTop: 1,
   },
