@@ -1,4 +1,5 @@
 import React from 'react';
+import {ActivityIndicator} from 'react-native';
 import {
   ScrollView,
   StatusBar,
@@ -13,9 +14,13 @@ import type {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {ArrowRight, Bell, ClipboardText, PlusCircle} from 'phosphor-react-native';
 
+import {ErrorMessage, ReportCard} from '../../../components';
+import {reportsService} from '../../../api/reportsService';
+import {ApiError} from '../../../api/types';
 import {useAuth} from '../../../navigation/AuthContext';
 import {BorderRadius, Colors, Spacing} from '../../../theme';
 import type {AppTabParamList, HomeStackParamList} from '../../../navigation/types';
+import type {Report} from '../../../types';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 type TabNav = BottomTabNavigationProp<AppTabParamList>;
@@ -26,9 +31,48 @@ export default function HomeScreen() {
   const parentNavigation = navigation.getParent<TabNav>();
   const {user} = useAuth();
   const firstName = user?.fullName?.split(' ')[0] ?? 'ciudadano';
+  const [reports, setReports] = React.useState<Report[]>([]);
+  const [loadingReports, setLoadingReports] = React.useState(true);
+  const [reportsError, setReportsError] = React.useState<string | null>(null);
+  const mountedRef = React.useRef(false);
 
   const goToCreate = () => parentNavigation?.navigate('CreateReport');
   const goToNotifs = () => parentNavigation?.navigate('Notifications');
+
+  async function loadReports() {
+    if (!mountedRef.current) {
+      return;
+    }
+
+    setReportsError(null);
+    try {
+      const response = await reportsService.getMyReports();
+      if (mountedRef.current) {
+        setReports(response.items);
+      }
+    } catch (err) {
+      if (mountedRef.current) {
+        setReportsError(
+          err instanceof ApiError
+            ? err.message
+            : 'No se pudieron cargar tus reportes.',
+        );
+      }
+    } finally {
+      if (mountedRef.current) {
+        setLoadingReports(false);
+      }
+    }
+  }
+
+  React.useEffect(() => {
+    mountedRef.current = true;
+    loadReports().catch(() => {});
+
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   return (
     <View style={styles.root} testID="home-screen">
@@ -74,32 +118,44 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.reportsButton}
-          onPress={() => navigation.navigate('MyReports')}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Ver mis reportes">
-          <Text style={styles.reportsButtonLabel}>Mis reportes</Text>
-          <Text style={styles.reportsButtonSub}>Revisa el estado y el historial</Text>
-        </TouchableOpacity>
-
-        <View style={styles.emptyCard}>
-          <View style={styles.emptyIconWrap}>
-            <ClipboardText size={30} color={Colors.primary} weight="light" />
-          </View>
-          <Text style={styles.emptyTitle}>Aún no tienes reportes</Text>
-          <Text style={styles.emptySub}>
-            Cuando crees un reporte aparecerá aquí con su estado actualizado.
-          </Text>
-          <TouchableOpacity
-            style={styles.emptyBtn}
-            onPress={goToCreate}
-            activeOpacity={0.85}>
-            <PlusCircle size={15} color="#fff" weight="fill" />
-            <Text style={styles.emptyBtnText}>Crear mi primer reporte</Text>
-          </TouchableOpacity>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Mis reportes</Text>
         </View>
+
+        {loadingReports ? (
+          <View style={styles.loadingBox} testID="home-reports-loading">
+            <ActivityIndicator color={Colors.primary} />
+            <Text style={styles.loadingText}>Cargando tus reportes...</Text>
+          </View>
+        ) : reportsError ? (
+          <ErrorMessage message={reportsError} />
+        ) : reports.length ? (
+          reports.map(report => (
+            <ReportCard
+              key={report.id}
+              report={report}
+              onPress={() => navigation.navigate('ReportDetail', {reportId: report.id})}
+              testID={`home-report-card-${report.id}`}
+            />
+          ))
+        ) : (
+          <View style={styles.emptyCard}>
+            <View style={styles.emptyIconWrap}>
+              <ClipboardText size={30} color={Colors.primary} weight="light" />
+            </View>
+            <Text style={styles.emptyTitle}>Aún no tienes reportes</Text>
+            <Text style={styles.emptySub}>
+              Cuando crees un reporte aparecerá aquí con su estado actualizado.
+            </Text>
+            <TouchableOpacity
+              style={styles.emptyBtn}
+              onPress={goToCreate}
+              activeOpacity={0.85}>
+              <PlusCircle size={15} color="#fff" weight="fill" />
+              <Text style={styles.emptyBtnText}>Crear mi primer reporte</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -195,23 +251,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  reportsButton: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: BorderRadius.card,
-    paddingVertical: Spacing.stackMd,
-    alignItems: 'center',
-    gap: 4,
-    borderWidth: 1,
-    borderColor: '#D7E1F0',
+  sectionHeader: {
+    paddingTop: Spacing.stackSm,
   },
-  reportsButtonLabel: {
-    fontSize: 18,
+  sectionTitle: {
+    fontSize: 16,
     fontWeight: '700',
     color: Colors.onSurface,
+    letterSpacing: -0.2,
   },
-  reportsButtonSub: {
-    fontSize: 13,
+  loadingBox: {
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: BorderRadius.card,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    paddingVertical: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  loadingText: {
+    fontSize: 14,
     color: Colors.onSurfaceVariant,
   },
   emptyCard: {

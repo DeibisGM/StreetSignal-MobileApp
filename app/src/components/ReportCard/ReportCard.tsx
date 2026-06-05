@@ -44,7 +44,9 @@ export function ReportCard({report, onPress, testID}: ReportCardProps) {
       <View style={styles.content}>
         <View style={styles.meta}>
           <Text style={styles.category} numberOfLines={1}>{report.category}</Text>
-          <StatusBadge status={report.status} />
+          <View style={styles.status}>
+            <StatusBadge status={report.status} />
+          </View>
         </View>
         <Text style={styles.title} numberOfLines={2}>{report.title}</Text>
         <Text style={styles.date}>{formattedDate}</Text>
@@ -79,6 +81,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    minWidth: 0,
     padding: 14,
     justifyContent: 'center',
     gap: 5,
@@ -86,16 +89,23 @@ const styles = StyleSheet.create({
   meta: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    flexWrap: 'wrap',
     gap: 8,
   },
   category: {
     flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
     fontSize: 10,
     fontWeight: '700',
     color: Colors.primary,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
+  },
+  status: {
+    flexShrink: 0,
+    marginLeft: 'auto',
   },
   title: {
     fontSize: 14,
