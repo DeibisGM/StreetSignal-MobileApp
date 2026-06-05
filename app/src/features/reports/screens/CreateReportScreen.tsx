@@ -194,13 +194,10 @@ export default function CreateReportScreen() {
         title: title.trim(),
         description: description.trim(),
         categoryId: categoryId!,
-        // Location is optional — default to 0,0 when not provided.
-        latitude: location?.latitude ?? 0,
-        longitude: location?.longitude ?? 0,
-        address: location?.address,
-        images: imageUri
-          ? [{uri: imageUri, name: 'report.jpg', type: 'image/jpeg'}]
-          : undefined,
+        latitude: location?.latitude ?? null,
+        longitude: location?.longitude ?? null,
+        address: location?.address ?? undefined,
+        imageUrl: imageUri ?? undefined,
       });
 
       await storageService.removeItem(STORAGE_KEYS.REPORT_DRAFT);

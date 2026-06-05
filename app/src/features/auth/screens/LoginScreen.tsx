@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {AppLogo} from '../../../components/AppLogo';
 import {ErrorMessage} from '../../../components/auth/ErrorMessage';
 import {LoadingButton} from '../../../components/auth/LoadingButton';
@@ -18,14 +20,17 @@ import {SuccessToast} from '../../../components/SuccessToast';
 import {useLogin} from '../hooks/useLogin';
 import {useAuth} from '../../../navigation/AuthContext';
 import {BASE_URL} from '../../../api';
+import type {AuthStackParamList} from '../../../navigation/types';
+
+type Nav = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 
 interface Props {
-  onNavigateToRegister?: () => void;
   successMessage?: string | null;
   onDismissSuccess?: () => void;
 }
 
-export function LoginScreen({onNavigateToRegister, successMessage, onDismissSuccess}: Props) {
+export function LoginScreen({successMessage, onDismissSuccess}: Props) {
+  const navigation = useNavigation<Nav>();
   const {login} = useAuth();
   const {
     email,
@@ -164,7 +169,7 @@ export function LoginScreen({onNavigateToRegister, successMessage, onDismissSucc
             {/* Register link */}
             <View style={styles.registerRow}>
               <Text style={styles.registerText}>No tienes cuenta? </Text>
-              <TouchableOpacity onPress={onNavigateToRegister} testID="go-to-register">
+              <TouchableOpacity onPress={() => navigation.navigate('Register')} testID="go-to-register">
                 <Text style={styles.registerLink}>Registrate</Text>
               </TouchableOpacity>
             </View>

@@ -25,20 +25,14 @@ export interface LoginRequest {
 }
 
 // --- Report DTOs ---
-export interface ImageAttachment {
-  uri: string;
-  name: string;
-  type: string;
-}
-
 export interface CreateReportRequest {
   title: string;
   description: string;
   categoryId: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number | null;
+  longitude?: number | null;
   address?: string;
-  images?: ImageAttachment[];
+  imageUrl?: string;
 }
 
 export interface UpdateReportRequest {

@@ -44,20 +44,15 @@ export const reportsService = {
     apiClient.get<Report>(ENDPOINTS.reports.detail(id)),
 
   createReport: (data: CreateReportRequest): Promise<Report> => {
-    const form = new FormData();
-    form.append('title', data.title);
-    form.append('description', data.description);
-    form.append('categoryId', String(data.categoryId));
-    form.append('latitude', String(data.latitude));
-    form.append('longitude', String(data.longitude));
-    if (data.address) {
-      form.append('address', data.address);
-    }
-    data.images?.forEach(img => {
-      // React Native FormData accepts {uri, name, type} for local files.
-      form.append('images', img as unknown as Blob);
+    return apiClient.post<Report>(ENDPOINTS.reports.create, {
+      title: data.title,
+      description: data.description,
+      categoryId: data.categoryId,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      address: data.address ?? null,
+      imageUrl: data.imageUrl ?? null,
     });
-    return apiClient.postForm<Report>(ENDPOINTS.reports.create, form);
   },
 
   updateReport: (id: string, data: UpdateReportRequest): Promise<Report> =>
