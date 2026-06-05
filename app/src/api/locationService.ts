@@ -16,25 +16,6 @@ interface LocationCache {
   savedAt: number;
 }
 
-interface NativePosition {
-  coords: {
-    latitude: number;
-    longitude: number;
-  };
-}
-
-interface NativeGeolocation {
-  getCurrentPosition: (
-    success: (position: NativePosition) => void,
-    error?: (err: {code?: number; message?: string}) => void,
-    options?: {
-      enableHighAccuracy?: boolean;
-      timeout?: number;
-      maximumAge?: number;
-    },
-  ) => void;
-}
-
 let mockCoords: Coordinates | null | undefined;
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
@@ -106,10 +87,62 @@ async function requestAndroidLocationPermission(): Promise<boolean> {
   return false;
 }
 
+function getGeolocationApi():
+  | {
+      getCurrentPosition: (
+        success: (position: {
+          coords: {latitude: number; longitude: number};
+        }) => void,
+        error?: (err: {code?: number; message?: string}) => void,
+        options?: {
+          enableHighAccuracy?: boolean;
+          timeout?: number;
+          maximumAge?: number;
+        },
+      ) => void;
+    }
+  | null {
+  if (Platform.OS === 'web') {
+    const geolocation = globalThis.navigator?.geolocation;
+    return geolocation?.getCurrentPosition ? geolocation : null;
+  }
+
+  try {
+    const module = require('react-native-geolocation-service') as {
+      default?: {
+        getCurrentPosition: (
+          success: (position: {
+            coords: {latitude: number; longitude: number};
+          }) => void,
+          error?: (err: {code?: number; message?: string}) => void,
+          options?: {
+            enableHighAccuracy?: boolean;
+            timeout?: number;
+            maximumAge?: number;
+          },
+        ) => void;
+      };
+      getCurrentPosition?: (
+        success: (position: {
+          coords: {latitude: number; longitude: number};
+        }) => void,
+        error?: (err: {code?: number; message?: string}) => void,
+        options?: {
+          enableHighAccuracy?: boolean;
+          timeout?: number;
+          maximumAge?: number;
+        },
+      ) => void;
+    };
+
+    return module.default ?? module ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function getBrowserOrNativeCoords(): Promise<Coordinates | null> {
-  const geolocation = (
-    globalThis as {navigator?: {geolocation?: NativeGeolocation}}
-  ).navigator?.geolocation;
+  const geolocation = getGeolocationApi();
 
   if (!geolocation?.getCurrentPosition) {
     return null;
