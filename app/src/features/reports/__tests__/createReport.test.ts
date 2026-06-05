@@ -9,7 +9,7 @@ const REPORT_RESPONSE = {
   id: 'report-1',
   title: 'Bache en la acera',
   description: 'Hay un bache grande en la acera principal',
-  categoryId: 2,
+  categoryId: 'cat-guid-2',
   category: 'Infraestructura',
   status: 'Pending',
   latitude: 9.9281,
@@ -33,7 +33,7 @@ describe('reportsService.createReport', () => {
     await reportsService.createReport({
       title: 'Bache en la acera',
       description: 'Hay un bache grande en la acera principal',
-      categoryId: 2,
+      categoryId: 'cat-guid-2',
       latitude: 9.9281,
       longitude: -84.0907,
       address: 'San José, CR',
@@ -50,7 +50,7 @@ describe('reportsService.createReport', () => {
       'description',
       'Hay un bache grande en la acera principal',
     );
-    expect(appendSpy).toHaveBeenCalledWith('categoryId', '2');
+    expect(appendSpy).toHaveBeenCalledWith('categoryId', 'cat-guid-2');
     expect(appendSpy).toHaveBeenCalledWith('latitude', '9.9281');
     expect(appendSpy).toHaveBeenCalledWith('longitude', '-84.0907');
     expect(appendSpy).toHaveBeenCalledWith('address', 'San José, CR');
@@ -66,7 +66,7 @@ describe('reportsService.createReport', () => {
     await reportsService.createReport({
       title: 'Bache en la acera',
       description: 'Hay un bache grande en la acera principal',
-      categoryId: 2,
+      categoryId: 'cat-guid-2',
       latitude: 9.9281,
       longitude: -84.0907,
     });
@@ -83,7 +83,7 @@ describe('reportsService.createReport', () => {
     await reportsService.createReport({
       title: 'Bache en la acera',
       description: 'Hay un bache grande en la acera principal',
-      categoryId: 2,
+      categoryId: 'cat-guid-2',
       latitude: 9.9281,
       longitude: -84.0907,
     });
@@ -100,7 +100,7 @@ describe('reportsService.createReport', () => {
       reportsService.createReport({
         title: 'Bache en la acera',
         description: 'Hay un bache grande en la acera principal',
-        categoryId: 2,
+        categoryId: 'cat-guid-2',
         latitude: 9.9281,
         longitude: -84.0907,
       }),
@@ -113,7 +113,7 @@ describe('reportsService.createReport', () => {
     const result = await reportsService.createReport({
       title: 'Bache en la acera',
       description: 'Hay un bache grande en la acera principal',
-      categoryId: 2,
+      categoryId: 'cat-guid-2',
       latitude: 9.9281,
       longitude: -84.0907,
     });

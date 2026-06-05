@@ -28,6 +28,19 @@ export const authService = {
 
   me: (): Promise<User> => apiClient.get<User>(ENDPOINTS.auth.me),
 
+  // Restores the stored session without calling /auth/me.
+  // Trusting the stored token avoids the race condition where a background
+  // /auth/me returning 401 (expired old token) triggers logout while the
+  // user is already authenticated with a fresh token.
+  // If the token IS expired, the first protected API call will return 401
+  // and notifyUnauthorized → logout handles it naturally.
+  restoreSession: async (): Promise<{token: string; user: User} | null> => {
+    const session = await storageService.loadSession();
+    if (!session) return null;
+    sessionManager.setSession(session.token, session.user);
+    return session;
+  },
+
   logout: (): void => {
     sessionManager.clearSession();
     storageService.clearSession().catch(() => {});

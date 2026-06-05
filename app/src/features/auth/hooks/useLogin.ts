@@ -1,6 +1,6 @@
 import {useRef, useState} from 'react';
 import {authService} from '../../../services/auth/authService';
-import {storageService} from '../../../storage/auth/storageService';
+import {storageService} from '../../../storage'; // Keychain-backed — same store restoreSession reads from
 import {sessionManager} from '../../../api/sessionManager';
 import {isValidEmail} from '../../../utils';
 import type {User} from '../../../types';
@@ -16,8 +16,6 @@ interface State {
   showPassword: boolean;
   loading: boolean;
   error: string | null;
-  debugStatus: string;
-  success: boolean;
   fieldErrors: FieldErrors;
 }
 
@@ -27,8 +25,6 @@ const INITIAL: State = {
   showPassword: false,
   loading: false,
   error: null,
-  debugStatus: 'Esperando intento de login',
-  success: false,
   fieldErrors: {},
 };
 
@@ -101,83 +97,28 @@ export function useLogin(onSuccess?: (user: User) => void) {
 
   async function submit() {
     if (submitting.current || state.loading) {
-      setState(prev => ({
-        ...prev,
-        debugStatus: 'Login ignorado: ya hay una solicitud en curso',
-      }));
-      if (__DEV__) {
-        console.log('[AUTH] login submit ignored', {
-          submitting: submitting.current,
-          loading: state.loading,
-        });
-      }
       return;
     }
-    if (__DEV__) {
-      console.log('[AUTH] login submit tapped', {
-        email: state.email.trim().toLowerCase(),
-        passwordLength: state.password.length,
-      });
-    }
-    setState(prev => ({
-      ...prev,
-      debugStatus: 'Boton presionado, validando formulario',
-    }));
     if (!validate()) {
-      setState(prev => ({
-        ...prev,
-        debugStatus: 'Validacion fallida antes de llamar al API',
-      }));
-      if (__DEV__) {
-        console.warn('[AUTH] login validation failed', state.fieldErrors);
-      }
       return;
     }
 
     submitting.current = true;
-    setState(prev => ({
-      ...prev,
-      loading: true,
-      error: null,
-      debugStatus: 'Enviando POST /auth/login',
-      success: false,
-    }));
+    setState(prev => ({...prev, loading: true, error: null}));
 
     try {
-      if (__DEV__) {
-        console.log('[AUTH] login submit', {
-          email: state.email.trim().toLowerCase(),
-          hasPassword: state.password.length > 0,
-        });
-      }
       const response = await authService.login({
         email: state.email.trim().toLowerCase(),
         password: state.password,
       });
-      if (__DEV__) {
-        console.log('[AUTH] login success', {
-          userId: response.user.id,
-          email: response.user.email,
-        });
-      }
       sessionManager.setSession(response.token, response.user);
       storageService.saveSession(response.token, response.user).catch(() => {});
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        debugStatus: 'Login exitoso: token recibido',
-        success: true,
-      }));
+      setState(prev => ({...prev, loading: false}));
       onSuccess?.(response.user);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (__DEV__) {
-        console.warn('[AUTH] login failed', err);
-      }
       setState(prev => ({
         ...prev,
         loading: false,
-        debugStatus: `Fallo login: ${message}`,
         error: getErrorMessage(err),
       }));
     } finally {
@@ -191,8 +132,6 @@ export function useLogin(onSuccess?: (user: User) => void) {
     showPassword: state.showPassword,
     loading: state.loading,
     error: state.error,
-    debugStatus: state.debugStatus,
-    success: state.success,
     fieldErrors: state.fieldErrors,
     setEmail,
     setPassword,

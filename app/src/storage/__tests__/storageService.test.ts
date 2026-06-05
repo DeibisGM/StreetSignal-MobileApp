@@ -1,25 +1,15 @@
 import {storageService, STORAGE_KEYS} from '../storageService';
 import {User} from '../../types';
 
-// --- Mocks ---------------------------------------------------------------
-
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
   setItem: jest.fn(),
   removeItem: jest.fn(),
 }));
 
-jest.mock('react-native-keychain', () => ({
-  setGenericPassword: jest.fn(),
-  getGenericPassword: jest.fn(),
-  resetGenericPassword: jest.fn(),
-}));
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Keychain from 'react-native-keychain';
 
-const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
-const mockKeychain = Keychain as jest.Mocked<typeof Keychain>;
+const mockStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 
 const fakeUser: User = {
   id: 'u1',
@@ -37,19 +27,16 @@ beforeEach(() => {
 // --- saveSession ---------------------------------------------------------
 
 describe('saveSession', () => {
-  it('stores token in Keychain and user fields in AsyncStorage', async () => {
-    mockKeychain.setGenericPassword.mockResolvedValueOnce(true as never);
-    mockAsyncStorage.setItem.mockResolvedValueOnce(undefined);
+  it('stores token and user fields in AsyncStorage', async () => {
+    mockStorage.setItem.mockResolvedValue(undefined);
 
     await storageService.saveSession('my.jwt.token', fakeUser);
 
-    expect(mockKeychain.setGenericPassword).toHaveBeenCalledWith(
-      'token',
-      'my.jwt.token',
-      expect.objectContaining({service: 'StreetSignal'}),
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
+      STORAGE_KEYS.AUTH_TOKEN,
+      JSON.stringify('my.jwt.token'),
     );
-
-    expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
       STORAGE_KEYS.AUTH_USER,
       JSON.stringify({
         id: fakeUser.id,
@@ -58,6 +45,7 @@ describe('saveSession', () => {
         role: fakeUser.role,
       }),
     );
+    expect(mockStorage.setItem).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -65,21 +53,16 @@ describe('saveSession', () => {
 
 describe('loadSession', () => {
   it('returns the session when token and user are present', async () => {
-    mockKeychain.getGenericPassword.mockResolvedValueOnce({
-      username: 'token',
-      password: 'my.jwt.token',
-      service: 'StreetSignal',
-      storage: '',
-    } as never);
-
-    mockAsyncStorage.getItem.mockResolvedValueOnce(
-      JSON.stringify({
-        id: fakeUser.id,
-        fullName: fakeUser.fullName,
-        email: fakeUser.email,
-        role: fakeUser.role,
-      }),
-    );
+    mockStorage.getItem
+      .mockResolvedValueOnce(JSON.stringify('my.jwt.token'))
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          id: fakeUser.id,
+          fullName: fakeUser.fullName,
+          email: fakeUser.email,
+          role: fakeUser.role,
+        }),
+      );
 
     const session = await storageService.loadSession();
 
@@ -90,22 +73,18 @@ describe('loadSession', () => {
   });
 
   it('returns null when no token is stored', async () => {
-    mockKeychain.getGenericPassword.mockResolvedValueOnce(false as never);
+    mockStorage.getItem.mockResolvedValueOnce(null);
 
     const session = await storageService.loadSession();
 
     expect(session).toBeNull();
-    expect(mockAsyncStorage.getItem).not.toHaveBeenCalled();
+    expect(mockStorage.getItem).toHaveBeenCalledTimes(1);
   });
 
   it('returns null when token exists but user data is missing', async () => {
-    mockKeychain.getGenericPassword.mockResolvedValueOnce({
-      username: 'token',
-      password: 'my.jwt.token',
-      service: 'StreetSignal',
-      storage: '',
-    } as never);
-    mockAsyncStorage.getItem.mockResolvedValueOnce(null);
+    mockStorage.getItem
+      .mockResolvedValueOnce(JSON.stringify('my.jwt.token'))
+      .mockResolvedValueOnce(null);
 
     const session = await storageService.loadSession();
 
@@ -117,22 +96,15 @@ describe('loadSession', () => {
 
 describe('clearSession', () => {
   it('removes all four persisted keys', async () => {
-    mockKeychain.resetGenericPassword.mockResolvedValueOnce(true as never);
-    mockAsyncStorage.removeItem.mockResolvedValue(undefined);
+    mockStorage.removeItem.mockResolvedValue(undefined);
 
     await storageService.clearSession();
 
-    expect(mockKeychain.resetGenericPassword).toHaveBeenCalledWith(
-      expect.objectContaining({service: 'StreetSignal'}),
-    );
-
-    expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith(STORAGE_KEYS.AUTH_USER);
-    expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith(STORAGE_KEYS.STAFF_LAST_FILTER);
-    expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith(STORAGE_KEYS.REPORT_DRAFT);
-
-    // 3 AsyncStorage.removeItem calls + 1 Keychain.resetGenericPassword
-    expect(mockAsyncStorage.removeItem).toHaveBeenCalledTimes(3);
-    expect(mockKeychain.resetGenericPassword).toHaveBeenCalledTimes(1);
+    expect(mockStorage.removeItem).toHaveBeenCalledWith(STORAGE_KEYS.AUTH_TOKEN);
+    expect(mockStorage.removeItem).toHaveBeenCalledWith(STORAGE_KEYS.AUTH_USER);
+    expect(mockStorage.removeItem).toHaveBeenCalledWith(STORAGE_KEYS.STAFF_LAST_FILTER);
+    expect(mockStorage.removeItem).toHaveBeenCalledWith(STORAGE_KEYS.REPORT_DRAFT);
+    expect(mockStorage.removeItem).toHaveBeenCalledTimes(4);
   });
 });
 
@@ -141,7 +113,7 @@ describe('clearSession', () => {
 describe('getItem', () => {
   it('parses JSON from AsyncStorage', async () => {
     const draft = {title: 'Pothole', description: 'Big one', categoryId: 2};
-    mockAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(draft));
+    mockStorage.getItem.mockResolvedValueOnce(JSON.stringify(draft));
 
     const result = await storageService.getItem<typeof draft>(STORAGE_KEYS.REPORT_DRAFT);
 
@@ -149,7 +121,7 @@ describe('getItem', () => {
   });
 
   it('returns null when key is not found', async () => {
-    mockAsyncStorage.getItem.mockResolvedValueOnce(null);
+    mockStorage.getItem.mockResolvedValueOnce(null);
 
     const result = await storageService.getItem(STORAGE_KEYS.REPORT_DRAFT);
 
@@ -159,12 +131,12 @@ describe('getItem', () => {
 
 describe('setItem', () => {
   it('serialises the value and writes to AsyncStorage', async () => {
-    mockAsyncStorage.setItem.mockResolvedValueOnce(undefined);
+    mockStorage.setItem.mockResolvedValueOnce(undefined);
     const filter = {status: 'Pending' as const, categoryId: 3};
 
     await storageService.setItem(STORAGE_KEYS.STAFF_LAST_FILTER, filter);
 
-    expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
+    expect(mockStorage.setItem).toHaveBeenCalledWith(
       STORAGE_KEYS.STAFF_LAST_FILTER,
       JSON.stringify(filter),
     );
@@ -173,10 +145,10 @@ describe('setItem', () => {
 
 describe('removeItem', () => {
   it('calls AsyncStorage.removeItem with the given key', async () => {
-    mockAsyncStorage.removeItem.mockResolvedValueOnce(undefined);
+    mockStorage.removeItem.mockResolvedValueOnce(undefined);
 
     await storageService.removeItem(STORAGE_KEYS.REPORT_DRAFT);
 
-    expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith(STORAGE_KEYS.REPORT_DRAFT);
+    expect(mockStorage.removeItem).toHaveBeenCalledWith(STORAGE_KEYS.REPORT_DRAFT);
   });
 });

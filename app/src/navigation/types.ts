@@ -30,7 +30,6 @@ export type AppTabParamList = {
   CreateReport: undefined;
   StaffTab: NavigatorScreenParams<StaffStackParamList>;
   Notifications: undefined;
-  Profile: undefined;
 };
 
 // Root navigator -----------------------------------------------------------

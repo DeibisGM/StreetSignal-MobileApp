@@ -39,7 +39,7 @@ export default function CreateReportScreen() {
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [location, setLocation] = useState<LocationValue | null>(null);
 
@@ -102,7 +102,7 @@ export default function CreateReportScreen() {
     const draft: ReportDraft = {
       title,
       description,
-      categoryId: categoryId ?? 0,
+      categoryId: categoryId ?? '',
       imageUri: imageUri ?? undefined,
     };
     storageService
