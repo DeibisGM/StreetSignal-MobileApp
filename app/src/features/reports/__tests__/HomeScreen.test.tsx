@@ -54,13 +54,23 @@ describe('HomeScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
-    // Fake setTimeout so ScrollView internal timers don't block act().
     jest.useFakeTimers({doNotFake: ['setImmediate', 'nextTick', 'queueMicrotask']});
   });
 
   afterEach(() => {
     jest.useRealTimers();
   });
+
+  /**
+   * Flushes all pending microtasks and state updates triggered by async
+   * effects so act() can synchronously wait for the component to settle.
+   */
+  async function flushComponent() {
+    await act(async () => {
+      // Drain the microtask queue so API mock resolves and setState fires.
+      await jest.runAllTimersAsync();
+    });
+  }
 
   /**
    * Acceptance criterion: EmptyState renders when the list is empty.
@@ -74,11 +84,7 @@ describe('HomeScreen', () => {
     });
 
     const {getByTestId} = renderHomeScreen();
-
-    await act(async () => {
-      await new Promise<void>(resolve => setImmediate(resolve));
-    });
-
+    await flushComponent();
     expect(getByTestId('home-empty-state')).toBeTruthy();
   });
 
@@ -105,11 +111,7 @@ describe('HomeScreen', () => {
     });
 
     const {getByTestId} = renderHomeScreen();
-
-    await act(async () => {
-      await new Promise<void>(resolve => setImmediate(resolve));
-    });
-
+    await flushComponent();
     expect(getByTestId('home-report-card-r1')).toBeTruthy();
   });
 
@@ -123,11 +125,7 @@ describe('HomeScreen', () => {
     mockGetMyReports.mockRejectedValue(new Error('Network error'));
 
     const {getByTestId} = renderHomeScreen();
-
-    await act(async () => {
-      await new Promise<void>(resolve => setImmediate(resolve));
-    });
-
+    await flushComponent();
     expect(getByTestId('home-reports-error')).toBeTruthy();
   });
 
@@ -137,10 +135,7 @@ describe('HomeScreen', () => {
     mockGetMyReports.mockResolvedValue({items: [], page: 1, pageSize: 10, total: 0});
 
     const {getByTestId} = renderHomeScreen();
-
-    await act(async () => {
-      await new Promise<void>(resolve => setImmediate(resolve));
-    });
+    await flushComponent();
 
     // At least the two ends of the chips bar exist.
     expect(getByTestId('home-status-chip-all')).toBeTruthy();
@@ -170,15 +165,14 @@ describe('HomeScreen', () => {
     });
 
     const {getByTestId} = renderHomeScreen();
+    await flushComponent();
 
-    await act(async () => {
-      await new Promise<void>(resolve => setImmediate(resolve));
-    });
+    mockGetMyReports.mockResolvedValue({items: [], page: 1, pageSize: 10, total: 0});
 
     await act(async () => {
       fireEvent.press(getByTestId('home-status-chip-InReview'));
-      await new Promise<void>(resolve => setImmediate(resolve));
     });
+    await flushComponent();
 
     // The most recent call should pass the new status filter.
     const lastCall =
@@ -209,11 +203,7 @@ describe('HomeScreen', () => {
     });
 
     const {getByTestId} = renderHomeScreen();
-
-    await act(async () => {
-      await new Promise<void>(resolve => setImmediate(resolve));
-    });
-
+    await flushComponent();
     expect(getByTestId('home-fab')).toBeTruthy();
   });
 
@@ -242,10 +232,7 @@ describe('HomeScreen', () => {
     mockGetMyReports.mockReturnValue(new Promise(() => {}));
 
     const {getByTestId} = renderHomeScreen();
-
-    await act(async () => {
-      await new Promise<void>(resolve => setImmediate(resolve));
-    });
+    await flushComponent();
 
     // The cached item should be on screen even though the API is still pending.
     expect(getByTestId('home-report-card-cached-1')).toBeTruthy();
@@ -257,10 +244,7 @@ describe('HomeScreen', () => {
     mockGetMyReports.mockResolvedValue({items: [], page: 1, pageSize: 10, total: 0});
 
     const {getByTestId, getByText} = renderHomeScreen();
-
-    await act(async () => {
-      await new Promise<void>(resolve => setImmediate(resolve));
-    });
+    await flushComponent();
 
     expect(getByTestId('home-hero-logo')).toBeTruthy();
     // The greeting uses the first name.
@@ -303,10 +287,7 @@ describe('HomeScreen', () => {
     });
 
     const {getByTestId, getByText} = renderHomeScreen();
-
-    await act(async () => {
-      await new Promise<void>(resolve => setImmediate(resolve));
-    });
+    await flushComponent();
 
     expect(getByTestId('home-reports-count')).toBeTruthy();
     expect(getByText('2')).toBeTruthy();
