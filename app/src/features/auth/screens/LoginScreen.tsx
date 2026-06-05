@@ -30,33 +30,12 @@ export function LoginScreen({onNavigateToRegister, successMessage, onDismissSucc
     showPassword,
     loading,
     error,
-    success,
     fieldErrors,
     setEmail,
     setPassword,
     toggleShowPassword,
     submit,
   } = useLogin();
-
-  if (success) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <StatusBar barStyle="light-content" backgroundColor="#1A3C5E" />
-        <View style={styles.successContainer}>
-          <View style={styles.successIconWrapper}>
-            <Text style={styles.successIconText}>&#10003;</Text>
-          </View>
-          <Text style={styles.successTitle}>Bienvenido</Text>
-          <Text style={styles.successBody}>
-            Has iniciado sesion correctamente.
-          </Text>
-          <View style={styles.successBadge}>
-            <Text style={styles.successBadgeText}>Sesion activa</Text>
-          </View>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -355,58 +334,4 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
 
-  // Success
-  successContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  successIconWrapper: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#4CAF50',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-    shadowColor: '#4CAF50',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  successIconText: {
-    fontSize: 38,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    lineHeight: 48,
-  },
-  successTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 10,
-  },
-  successBody: {
-    fontSize: 16,
-    color: '#A8C4E0',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 28,
-  },
-  successBadge: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  successBadgeText: {
-    color: '#A8C4E0',
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
 });

@@ -1,12 +1,13 @@
 import React from 'react';
-import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, StyleSheet, Text} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 export default function SplashScreen() {
   return (
-    <View style={styles.container} testID="splash-screen">
+    <SafeAreaView style={styles.container} testID="splash-screen">
       <Text style={styles.title}>StreetSignal</Text>
       <ActivityIndicator size="large" color="#A8C4E0" style={styles.spinner} />
-    </View>
+    </SafeAreaView>
   );
 }
 

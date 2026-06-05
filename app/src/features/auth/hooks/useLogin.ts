@@ -1,7 +1,7 @@
 import {useRef, useState} from 'react';
-import {authService} from '../../../services/auth/authService';
-import {storageService} from '../../../storage/auth/storageService';
+import {authService} from '../../../api/authService';
 import {isValidEmail} from '../../../utils';
+import {useAuth} from '../../../navigation/AuthContext';
 
 interface FieldErrors {
   email?: string;
@@ -50,6 +50,7 @@ function getErrorMessage(err: unknown): string {
 }
 
 export function useLogin() {
+  const {login} = useAuth();
   const [state, setState] = useState<State>(INITIAL);
   const submitting = useRef(false);
 
@@ -111,8 +112,8 @@ export function useLogin() {
         email: state.email.trim().toLowerCase(),
         password: state.password,
       });
-      await storageService.saveSession(response.token, response.user);
       setState(prev => ({...prev, loading: false, success: true}));
+      login(response.user);
     } catch (err: unknown) {
       setState(prev => ({
         ...prev,
