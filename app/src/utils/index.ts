@@ -1,8 +1,21 @@
 import {REPORT_STATUS_LABELS} from '../constants';
 import type {ReportStatus} from '../types';
 
+/**
+ * Parse an ISO string ensuring UTC is assumed when no timezone offset is present.
+ * Hermes (React Native) is inconsistent about whether bare datetime strings
+ * are treated as local or UTC — appending 'Z' makes it explicit.
+ */
+export function parseUTCDate(iso: string): Date {
+  // Already has timezone info (Z, +HH:MM, -HH:MM)
+  if (/[Zz]$/.test(iso) || /[+-]\d{2}:\d{2}$/.test(iso)) {
+    return new Date(iso);
+  }
+  return new Date(iso + 'Z');
+}
+
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-CR', {
+  return parseUTCDate(iso).toLocaleDateString('es-CR', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

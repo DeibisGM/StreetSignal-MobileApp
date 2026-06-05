@@ -223,9 +223,14 @@ function toQueryString(params: Record<string, unknown>): string {
 }
 
 export const reportsService = {
-  getMyReports: async (): Promise<PaginatedResponse<Report>> => {
+  getMyReports: async (params?: {
+    page?: number;
+    pageSize?: number;
+    status?: ReportStatus;
+  }): Promise<PaginatedResponse<Report>> => {
+    const qs = params ? toQueryString(params as Record<string, unknown>) : '';
     const response = await apiClient.get<RawPaginatedReportListResponse>(
-      ENDPOINTS.reports.mine,
+      `${ENDPOINTS.reports.mine}${qs}`,
     );
     return mapPaginatedReports(response);
   },
