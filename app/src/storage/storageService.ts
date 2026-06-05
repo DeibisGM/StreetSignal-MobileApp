@@ -83,7 +83,6 @@ export const storageService = {
       asyncRemove(STORAGE_KEYS.AUTH_TOKEN),
       asyncRemove(STORAGE_KEYS.AUTH_USER),
       asyncRemove(STORAGE_KEYS.STAFF_LAST_FILTER),
-      asyncRemove(STORAGE_KEYS.STAFF_REPORTS_CACHE),
       asyncRemove(STORAGE_KEYS.REPORT_DRAFT),
     ]);
   },

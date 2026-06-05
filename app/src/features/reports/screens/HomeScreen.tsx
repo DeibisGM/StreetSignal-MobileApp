@@ -40,10 +40,6 @@ export default function HomeScreen() {
   const goToNotifs = () => parentNavigation?.navigate('Notifications');
 
   async function loadReports() {
-    if (!mountedRef.current) {
-      return;
-    }
-
     setReportsError(null);
     try {
       const response = await reportsService.getMyReports();
@@ -132,7 +128,9 @@ export default function HomeScreen() {
             <Text style={styles.loadingText}>Cargando tus reportes...</Text>
           </View>
         ) : reportsError ? (
-          <ErrorMessage message={reportsError} />
+          <View testID="home-reports-error">
+            <ErrorMessage message={reportsError} />
+          </View>
         ) : reports.length ? (
           reports.map(report => (
             <ReportCard
@@ -145,7 +143,7 @@ export default function HomeScreen() {
             />
           ))
         ) : (
-          <View style={styles.emptyCard}>
+          <View style={styles.emptyCard} testID="home-empty-state">
             <View style={styles.emptyIconWrap}>
               <ClipboardText size={30} color={Colors.primary} weight="light" />
             </View>
