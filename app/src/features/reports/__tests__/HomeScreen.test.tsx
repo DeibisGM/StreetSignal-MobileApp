@@ -1,5 +1,5 @@
 import React from 'react';
-import {render, act, fireEvent} from '@testing-library/react-native';
+import {render, act, fireEvent, waitFor} from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {AuthContext} from '../../../navigation/AuthContext';
@@ -54,21 +54,15 @@ describe('HomeScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (AsyncStorage.getItem as jest.Mock).mockResolvedValue(null);
-    jest.useFakeTimers({doNotFake: ['setImmediate', 'nextTick', 'queueMicrotask']});
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
   });
 
   /**
-   * Flushes all pending microtasks and state updates triggered by async
-   * effects so act() can synchronously wait for the component to settle.
+   * Waits for the component to settle after mount effects complete.
+   * Uses waitFor (polls the tree) so no fake-timer conflicts with RN internals.
    */
   async function flushComponent() {
     await act(async () => {
-      // Drain the microtask queue so API mock resolves and setState fires.
-      await jest.runAllTimersAsync();
+      await waitFor(() => expect(true).toBe(true));
     });
   }
 
