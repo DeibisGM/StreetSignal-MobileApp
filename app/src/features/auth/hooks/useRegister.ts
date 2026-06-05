@@ -165,8 +165,28 @@ export function useRegister() {
   }
 
   async function submit() {
-    if (submitting.current || state.loading) {return;}
-    if (!validate()) {return;}
+    if (submitting.current || state.loading) {
+      if (__DEV__) {
+        console.log('[AUTH] register submit ignored', {
+          submitting: submitting.current,
+          loading: state.loading,
+        });
+      }
+      return;
+    }
+    if (__DEV__) {
+      console.log('[AUTH] register submit tapped', {
+        email: state.email.trim().toLowerCase(),
+        fullNameLength: state.fullName.trim().length,
+        passwordLength: state.password.length,
+      });
+    }
+    if (!validate()) {
+      if (__DEV__) {
+        console.warn('[AUTH] register validation failed', state.fieldErrors);
+      }
+      return;
+    }
 
     submitting.current = true;
     setState(prev => ({...prev, loading: true, error: null, success: false}));
@@ -178,8 +198,8 @@ export function useRegister() {
         password: state.password,
         confirmPassword: state.confirmPassword,
       });
-      await storageService.saveSession(response.token, response.user);
       sessionManager.setSession(response.token, response.user);
+      storageService.saveSession(response.token, response.user).catch(() => {});
       setState(prev => ({...prev, loading: false, success: true}));
     } catch (err: unknown) {
       setState(prev => ({

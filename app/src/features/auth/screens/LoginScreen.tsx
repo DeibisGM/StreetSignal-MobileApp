@@ -17,6 +17,7 @@ import {LoadingButton} from '../../../components/auth/LoadingButton';
 import {SuccessToast} from '../../../components/SuccessToast';
 import {useLogin} from '../hooks/useLogin';
 import {useAuth} from '../../../navigation/AuthContext';
+import {BASE_URL} from '../../../api';
 
 interface Props {
   onNavigateToRegister?: () => void;
@@ -32,6 +33,7 @@ export function LoginScreen({onNavigateToRegister, successMessage, onDismissSucc
     showPassword,
     loading,
     error,
+    debugStatus,
     success,
     fieldErrors,
     setEmail,
@@ -169,6 +171,11 @@ export function LoginScreen({onNavigateToRegister, successMessage, onDismissSucc
               testID="submit-button"
               style={styles.submitButton}
             />
+
+            <View style={styles.debugBox}>
+              <Text style={styles.debugText}>API: {BASE_URL}</Text>
+              <Text style={styles.debugText}>Estado: {debugStatus}</Text>
+            </View>
 
             {/* Divider */}
             <View style={styles.divider}>
@@ -313,6 +320,19 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: 6,
     marginBottom: 20,
+  },
+  debugBox: {
+    backgroundColor: '#F3F8FC',
+    borderColor: '#D8E7F3',
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 18,
+    padding: 10,
+  },
+  debugText: {
+    color: '#345873',
+    fontSize: 11,
+    lineHeight: 16,
   },
 
   // Divider

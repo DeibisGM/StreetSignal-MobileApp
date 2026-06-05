@@ -1,4 +1,20 @@
-﻿export const API_BASE_URL = 'http://192.168.0.213:5000/api';
+import {Platform} from 'react-native';
+
+function getDevApiBaseUrl(): string {
+  if (Platform.OS === 'android') {
+    return 'http://localhost:5000/api';
+  }
+
+  if (Platform.OS === 'web') {
+    return 'http://localhost:5000/api';
+  }
+
+  return 'http://localhost:5000/api';
+}
+
+// Bare React Native does not inject Expo-style env vars by default.
+// Android uses adb reverse: adb reverse tcp:5000 tcp:5000.
+export const API_BASE_URL = getDevApiBaseUrl();
 
 export const REPORT_STATUSES = [
   'Pending',

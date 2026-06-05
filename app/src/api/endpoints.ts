@@ -1,12 +1,5 @@
 import { API_BASE_URL } from '../constants';
-
-declare const process: { env: Record<string, string | undefined> } | undefined;
-const ENV_URL =
-  typeof process !== 'undefined'
-    ? process?.env.EXPO_PUBLIC_API_URL
-    : undefined;
-
-export const BASE_URL = ENV_URL ?? API_BASE_URL;
+export const BASE_URL = API_BASE_URL;
 
 export const ENDPOINTS = {
   health: '/health',
