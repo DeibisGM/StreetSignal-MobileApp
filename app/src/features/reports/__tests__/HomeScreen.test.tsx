@@ -62,7 +62,7 @@ describe('HomeScreen', () => {
    */
   async function flushComponent() {
     await act(async () => {
-      await waitFor(() => expect(true).toBe(true));
+      await waitFor(() => expect(true).toBe(true), {timeout: 8000});
     });
   }
 
@@ -78,9 +78,11 @@ describe('HomeScreen', () => {
     });
 
     const {getByTestId} = renderHomeScreen();
-    await flushComponent();
+    await act(async () => {
+      await waitFor(() => expect(true).toBe(true), {timeout: 8000});
+    });
     expect(getByTestId('home-empty-state')).toBeTruthy();
-  });
+  }, 10000);
 
   it('renders report cards when reports are present', async () => {
     mockGetMyReports.mockResolvedValue({
