@@ -100,9 +100,6 @@ export default function MyReportsScreen(_props: Props) {
     <View style={styles.root} testID="my-reports-screen">
       <View style={styles.header}>
         <Text style={styles.title}>Mis reportes</Text>
-        <Text style={styles.subtitle}>
-          Revisa el estado actual y el historial de cada reporte.
-        </Text>
       </View>
 
       <FlatList
