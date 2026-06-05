@@ -20,6 +20,7 @@ import {STORAGE_KEYS, storageService} from '../../../storage/storageService';
 import {Colors, BorderRadius, Spacing} from '../../../theme';
 import {StaffStackParamList} from '../../../navigation/types';
 import type {Category, Report, ReportStatus} from '../../../types';
+/* eslint-disable react-hooks/exhaustive-deps */
 
 type Nav = NativeStackNavigationProp<StaffStackParamList>;
 type StaffFilterStatus = ReportStatus | 'All';
