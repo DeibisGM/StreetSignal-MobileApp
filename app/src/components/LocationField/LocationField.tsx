@@ -1,6 +1,12 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {MapPin, CaretRight} from 'phosphor-react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import {MapPin, ArrowClockwise} from 'phosphor-react-native';
 import {Colors, BorderRadius, Spacing} from '../../theme';
 
 interface LocationFieldProps {
@@ -8,6 +14,7 @@ interface LocationFieldProps {
   onPress?: () => void;
   label?: string;
   placeholder?: string;
+  loading?: boolean;
   disabled?: boolean;
   testID?: string;
 }
@@ -16,33 +23,43 @@ export function LocationField({
   value,
   onPress,
   label,
-  placeholder = 'Toca para seleccionar ubicación',
+  placeholder = 'Toca para buscar ubicacion',
+  loading = false,
   disabled = false,
   testID,
 }: LocationFieldProps) {
-  const interactive = !!onPress && !disabled;
+  const interactive = !!onPress && !disabled && !loading;
 
   const inner = (
     <View
       style={[
         styles.field,
         value ? styles.fieldFilled : styles.fieldEmpty,
-        disabled && styles.fieldDisabled,
+        (disabled || loading) && styles.fieldDisabled,
       ]}
-      accessibilityLabel={label ?? 'Ubicación'}
-      accessibilityValue={{text: value ?? placeholder}}>
+      accessibilityLabel={label ?? 'Ubicacion'}
+      accessibilityValue={{
+        text: loading ? 'Buscando ubicacion' : value ?? placeholder,
+      }}>
       <MapPin
         size={18}
-        color={value ? Colors.primary : Colors.outline}
-        weight={value ? 'fill' : 'regular'}
+        color={loading ? Colors.primary : value ? Colors.primary : Colors.outline}
+        weight={value || loading ? 'fill' : 'regular'}
       />
       <Text
         style={[styles.valueText, !value && styles.placeholderText]}
         numberOfLines={2}>
-        {value ?? placeholder}
+        {loading ? 'Buscando ubicacion...' : value ?? placeholder}
       </Text>
-      {interactive ? (
-        <CaretRight size={16} color={Colors.outline} />
+      {loading ? (
+        <View style={styles.loadingPill}>
+          <ActivityIndicator size="small" color={Colors.primary} />
+        </View>
+      ) : interactive ? (
+        <View style={styles.actionPill}>
+          <ArrowClockwise size={14} color={Colors.primary} weight="bold" />
+          <Text style={styles.actionText}>Buscar otra vez</Text>
+        </View>
       ) : null}
     </View>
   );
@@ -55,11 +72,13 @@ export function LocationField({
           onPress={onPress}
           activeOpacity={0.75}
           accessibilityRole="button"
-          accessibilityLabel={label ?? 'Seleccionar ubicación'}
+          accessibilityLabel={label ?? 'Buscar ubicacion'}
           testID="location-field-trigger">
           {inner}
         </TouchableOpacity>
-      ) : inner}
+      ) : (
+        inner
+      )}
     </View>
   );
 }
@@ -100,4 +119,27 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   placeholderText: {color: Colors.outline},
+  actionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+    backgroundColor: '#EEF4FF',
+  },
+  actionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.primary,
+  },
+  loadingPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+    backgroundColor: '#EEF4FF',
+  },
 });

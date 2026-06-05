@@ -1,5 +1,12 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Alert, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
@@ -11,13 +18,18 @@ import {LoadingButton} from '../../../components/LoadingButton';
 import {LocationField} from '../../../components/LocationField';
 import {SuccessToast} from '../../../components/SuccessToast';
 import {categoriesService} from '../../../api/categoriesService';
-import {captureFromCamera, pickFromGallery, uploadReportImage, type ImageAsset} from '../../../api/imageService';
+import {
+  captureFromCamera,
+  pickFromGallery,
+  uploadReportImage,
+  type ImageAsset,
+} from '../../../api/imageService';
+import {getCurrentCoords, reverseGeocode} from '../../../api/locationService';
 import {reportsService} from '../../../api/reportsService';
 import {storageService, STORAGE_KEYS} from '../../../storage/storageService';
 import type {ReportDraft} from '../../../storage/storageService';
 import {ApiError} from '../../../api/types';
 import {Colors, Spacing} from '../../../theme';
-import {useLanguage} from '../../../i18n';
 import type {AppTabParamList} from '../../../navigation/types';
 import type {Category} from '../../../types';
 
@@ -40,8 +52,6 @@ interface FormErrors {
 export default function CreateReportScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
-  const {t} = useLanguage();
-  const cr = t.reports.create;
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -49,6 +59,8 @@ export default function CreateReportScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [imageAsset, setImageAsset] = useState<ImageAsset | null>(null);
   const [location, setLocation] = useState<LocationValue | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationMessage, setLocationMessage] = useState<string | null>(null);
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [categories, setCategories] = useState<Category[]>([]);
@@ -57,9 +69,10 @@ export default function CreateReportScreen() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const submittingRef = useRef(false);
+  const mountedRef = useRef(true);
 
-  // Load categories + restore draft on mount
   useEffect(() => {
+    mountedRef.current = true;
     let mounted = true;
 
     (async () => {
@@ -70,7 +83,7 @@ export default function CreateReportScreen() {
           setCategories(cats);
         }
       } catch {
-        // Non-blocking — picker renders empty until categories load
+        // Non-blocking: picker renders empty until categories load
       } finally {
         if (mounted) {
           setLoadingCategories(false);
@@ -92,26 +105,28 @@ export default function CreateReportScreen() {
           }
         }
       } catch {
-        // Ignore — start with empty form
+        // Ignore and start with an empty form
       }
     })();
 
     return () => {
       mounted = false;
+      mountedRef.current = false;
     };
   }, []);
 
-  // Persist draft on every field change (location excluded per storage spec)
   useEffect(() => {
     if (!title && !description && !categoryId && !imageUri) {
       return;
     }
+
     const draft: ReportDraft = {
       title,
       description,
       categoryId: categoryId ?? '',
       imageUri: imageUri ?? undefined,
     };
+
     storageService
       .setItem<ReportDraft>(STORAGE_KEYS.REPORT_DRAFT, draft)
       .catch(() => {});
@@ -131,23 +146,90 @@ export default function CreateReportScreen() {
   function validate(): boolean {
     const errs: FormErrors = {};
     if (title.trim().length < 5) {
-      errs.title = cr.errors.titleTooShort;
+      errs.title = 'El titulo debe tener al menos 5 caracteres.';
     }
     if (description.trim().length < 10) {
-      errs.description = cr.errors.descriptionTooShort;
+      errs.description = 'La descripcion debe tener al menos 10 caracteres.';
     }
     if (categoryId === null) {
-      errs.category = cr.errors.categoryRequired;
+      errs.category = 'Selecciona una categoria.';
     }
-    // Image and location are optional.
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
 
+  async function captureLocation() {
+    if (locationLoading) {
+      return;
+    }
+
+    setLocationLoading(true);
+    setLocationMessage(null);
+    setErrors(prev => {
+      if (!prev.location) {
+        return prev;
+      }
+      const next = {...prev};
+      delete next.location;
+      return next;
+    });
+
+    try {
+      const coords = await getCurrentCoords();
+      if (!mountedRef.current) {
+        return;
+      }
+
+      if (!coords) {
+        setLocation(null);
+        setLocationMessage(null);
+        setErrors(prev => ({
+          ...prev,
+          location: 'No se pudo obtener tu ubicacion. Toca Reintentar.',
+        }));
+        return;
+      }
+
+      const address = await reverseGeocode(coords);
+      if (!mountedRef.current) {
+        return;
+      }
+
+      setLocation({
+        latitude: coords.lat,
+        longitude: coords.lng,
+        address: address ?? undefined,
+      });
+
+      if (!address) {
+        setLocationMessage(
+          'No pudimos obtener la direccion aproximada. Se guardaran solo las coordenadas.',
+        );
+      } else {
+        setLocationMessage(null);
+      }
+    } catch {
+      if (!mountedRef.current) {
+        return;
+      }
+
+      setLocation(null);
+      setLocationMessage(null);
+      setErrors(prev => ({
+        ...prev,
+        location: 'No se pudo obtener tu ubicacion. Toca Reintentar.',
+      }));
+    } finally {
+      if (mountedRef.current) {
+        setLocationLoading(false);
+      }
+    }
+  }
+
   function handleImagePick() {
-    Alert.alert(cr.addPhotoTitle, cr.addPhotoMessage, [
+    Alert.alert('Agregar foto', 'Selecciona el origen de la imagen', [
       {
-        text: cr.gallery,
+        text: 'Galeria',
         onPress: () => {
           pickFromGallery().then(asset => {
             if (asset) {
@@ -159,7 +241,7 @@ export default function CreateReportScreen() {
         },
       },
       {
-        text: cr.camera,
+        text: 'Camara',
         onPress: () => {
           captureFromCamera().then(asset => {
             if (asset) {
@@ -170,24 +252,8 @@ export default function CreateReportScreen() {
           });
         },
       },
-      {text: cr.cancel, style: 'cancel'},
+      {text: 'Cancelar', style: 'cancel'},
     ]);
-  }
-
-  // TODO(#14): replace with locationService.getCurrentCoords
-  function handleLocationPress() {
-    // locationService.getCurrentCoords().then(coords => {
-    //   if (!coords) return;
-    //   locationService.reverseGeocode(coords).then(addr => {
-    //     setLocation({...coords, address: addr ?? undefined});
-    //     clearError('location');
-    //   }).catch(() => {
-    //     setLocation(coords);
-    //     clearError('location');
-    //   });
-    // }).catch(() => {
-    //   Alert.alert('Sin ubicación', 'No se pudo obtener tu ubicación. Intenta nuevamente.');
-    // });
   }
 
   async function handleSubmit() {
@@ -220,7 +286,6 @@ export default function CreateReportScreen() {
       });
 
       await storageService.removeItem(STORAGE_KEYS.REPORT_DRAFT);
-      await storageService.removeItem(STORAGE_KEYS.STAFF_REPORTS_CACHE);
 
       setTitle('');
       setDescription('');
@@ -228,8 +293,9 @@ export default function CreateReportScreen() {
       setImageUri(null);
       setImageAsset(null);
       setLocation(null);
+      setLocationMessage(null);
       setErrors({});
-      setToastMessage(cr.success);
+      setToastMessage('Reporte enviado con exito!');
 
       setTimeout(() => {
         navigation.navigate('HomeTab', {screen: 'Home'});
@@ -237,14 +303,23 @@ export default function CreateReportScreen() {
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.statusCode === 401) {
-          Alert.alert(cr.errors.sessionExpiredTitle, cr.errors.sessionExpiredMsg);
+          Alert.alert(
+            'Sesion expirada',
+            'Tu sesion ha caducado. Inicia sesion nuevamente.',
+          );
         } else if (err.statusCode === 400) {
-          Alert.alert(cr.errors.invalidDataTitle, err.message || cr.errors.invalidDataMsg);
+          Alert.alert(
+            'Datos invalidos',
+            err.message || 'Revisa el formulario e intenta nuevamente.',
+          );
         } else {
-          Alert.alert(cr.errors.errorTitle, err.message || cr.errors.sendError);
+          Alert.alert('Error', err.message || 'No se pudo enviar el reporte.');
         }
       } else {
-        Alert.alert(cr.errors.noConnectionTitle, cr.errors.noConnectionMsg);
+        Alert.alert(
+          'Sin conexion',
+          'Verifica tu conexion e intenta nuevamente.',
+        );
       }
     } finally {
       submittingRef.current = false;
@@ -253,9 +328,12 @@ export default function CreateReportScreen() {
   }
 
   const locationDisplay = location
-    ? (location.address ??
-        `${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}`)
-    : null;
+    ? `${location.address ? `${location.address}\n` : ''}${location.latitude.toFixed(
+        5,
+      )}, ${location.longitude.toFixed(5)}`
+    : locationLoading
+      ? 'Obteniendo ubicacion...'
+      : null;
 
   return (
     <View style={styles.root} testID="create-report-screen">
@@ -268,10 +346,9 @@ export default function CreateReportScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-
         <AppTextInput
-          label={cr.titleLabel}
-          placeholder={cr.titlePlaceholder}
+          label="Titulo"
+          placeholder="Que problema detectaste?"
           value={title}
           onChangeText={text => {
             setTitle(text);
@@ -284,8 +361,8 @@ export default function CreateReportScreen() {
         />
 
         <AppTextInput
-          label={cr.descriptionLabel}
-          placeholder={cr.descriptionPlaceholder}
+          label="Descripcion"
+          placeholder="Describe el problema con mas detalle..."
           value={description}
           onChangeText={text => {
             setDescription(text);
@@ -299,7 +376,7 @@ export default function CreateReportScreen() {
         />
 
         <CategoryPicker
-          label={cr.categoryLabel}
+          label="Categoria"
           categories={categories}
           selectedId={categoryId}
           loading={loadingCategories}
@@ -316,7 +393,7 @@ export default function CreateReportScreen() {
         ) : null}
 
         <ImagePickerField
-          label={cr.photoLabel}
+          label="Foto del problema (opcional)"
           value={imageUri}
           onPick={handleImagePick}
           onRemove={() => {
@@ -334,23 +411,39 @@ export default function CreateReportScreen() {
         ) : null}
 
         <LocationField
-          label={cr.locationLabel}
+          label="Ubicacion"
           value={locationDisplay}
-          onPress={handleLocationPress}
-          disabled={submitting}
+          onPress={() => {
+            void captureLocation();
+          }}
+          loading={locationLoading}
+          disabled={submitting || loadingCategories || locationLoading}
           testID="location-field"
         />
+        {locationMessage ? (
+          <Text style={styles.locationMessage}>{locationMessage}</Text>
+        ) : null}
         {errors.location ? (
-          <Text style={styles.fieldError} accessibilityRole="alert">
-            {errors.location}
-          </Text>
+          <View style={styles.locationErrorRow}>
+            <Text style={styles.fieldError} accessibilityRole="alert">
+              {errors.location}
+            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                void captureLocation();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Reintentar ubicacion"
+              testID="location-retry">
+              <Text style={styles.locationRetry}>Buscar otra vez</Text>
+            </TouchableOpacity>
+          </View>
         ) : null}
       </ScrollView>
 
-      {/* Fixed footer */}
       <View style={[styles.footer, {paddingBottom: insets.bottom + 12}]}>
         <LoadingButton
-          label={cr.submitButton}
+          label="Enviar reporte"
           onPress={handleSubmit}
           loading={submitting}
           testID="submit-button"
@@ -380,6 +473,26 @@ const styles = StyleSheet.create({
     marginTop: -Spacing.stackMd + 4,
     marginBottom: Spacing.stackMd,
     marginLeft: 2,
+  },
+  locationMessage: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: Colors.onSurfaceVariant,
+    marginTop: 6,
+    marginBottom: Spacing.stackMd,
+    marginLeft: 2,
+  },
+  locationErrorRow: {
+    marginTop: 6,
+    marginBottom: Spacing.stackMd,
+  },
+  locationRetry: {
+    marginLeft: 2,
+    marginTop: 2,
+    fontSize: 12,
+    lineHeight: 16,
+    color: Colors.primary,
+    fontWeight: '600',
   },
   footer: {
     paddingHorizontal: Spacing.marginPage,

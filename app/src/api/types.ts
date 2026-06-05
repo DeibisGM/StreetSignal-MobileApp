@@ -1,4 +1,4 @@
-import {ReportStatus} from '../types';
+import {ReportPriority, ReportStatus} from '../types';
 
 export class ApiError extends Error {
   constructor(
@@ -42,6 +42,8 @@ export interface UpdateReportRequest {
 
 export interface UpdateReportStatusRequest {
   newStatus: ReportStatus;
+  priority?: ReportPriority | null;
+  assignedToId?: string | null;
   message?: string;
 }
 

@@ -1,4 +1,4 @@
-import {PaginatedResponse, Report, ReportStatus, ReportUpdate, ReportUpdateType, UserRole} from '../types';
+import {PaginatedResponse, Report, ReportPriority, ReportStatus, ReportUpdate, ReportUpdateType, UserRole} from '../types';
 import {apiClient} from './client';
 import {ENDPOINTS} from './endpoints';
 import {
@@ -20,6 +20,7 @@ const REPORT_STATUSES: ReportStatus[] = [
 
 type RawUserRole = number | string;
 type RawReportStatus = number | string;
+type RawReportPriority = number | string;
 type RawReportUpdateType = number | string;
 
 interface RawUserBasicDto {
@@ -50,12 +51,14 @@ interface RawReportSummaryDto {
   title: string;
   description?: string | null;
   status: RawReportStatus;
+  priority?: RawReportPriority | null;
   category: RawCategoryDto;
   imageUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   address?: string | null;
   createdBy: RawUserBasicDto;
+  assignedTo?: RawUserBasicDto | null;
   createdAt: string;
   updatedAt?: string | null;
   resolvedAt?: string | null;
@@ -119,6 +122,38 @@ function mapStatusToApi(status: ReportStatus): number {
   return Math.max(0, REPORT_STATUSES.indexOf(status));
 }
 
+function mapPriority(raw: RawReportPriority | null | undefined): ReportPriority | null {
+  if (raw === null || raw === undefined) {
+    return null;
+  }
+
+  const priorities: ReportPriority[] = ['Low', 'Medium', 'High', 'Critical'];
+
+  if (typeof raw === 'string') {
+    const lower = raw.trim().toLowerCase();
+    const byName = priorities.find(priority => priority.toLowerCase() === lower);
+    if (byName) {
+      return byName;
+    }
+    const parsed = Number(raw);
+    if (!Number.isNaN(parsed)) {
+      return priorities[parsed] ?? null;
+    }
+    return null;
+  }
+
+  return priorities[raw] ?? null;
+}
+
+function mapPriorityToApi(priority: ReportPriority | null | undefined): number | null {
+  if (priority === null || priority === undefined) {
+    return null;
+  }
+
+  const priorities: ReportPriority[] = ['Low', 'Medium', 'High', 'Critical'];
+  return Math.max(0, priorities.indexOf(priority));
+}
+
 function mapUpdateType(raw: RawReportUpdateType): ReportUpdateType {
   if (typeof raw === 'string') {
     const lower = raw.trim().toLowerCase();
@@ -175,11 +210,15 @@ function mapReport(raw: RawReportSummaryDto): Report {
     categoryId: '',
     category: raw.category?.name ?? '',
     status: mapStatus(raw.status),
+    priority: mapPriority(raw.priority),
     latitude: raw.latitude ?? null,
     longitude: raw.longitude ?? null,
     address: raw.address ?? undefined,
     createdById: createdBy.id,
     createdByName: createdBy.fullName,
+    assignedToId: raw.assignedTo?.id ?? null,
+    assignedToName: raw.assignedTo?.fullName ?? null,
+    assignedTo: raw.assignedTo ? mapUser(raw.assignedTo) : null,
     imageUrl: raw.imageUrl ?? undefined,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt ?? undefined,
@@ -200,6 +239,8 @@ function mapPaginatedReports(raw: RawPaginatedReportListResponse): PaginatedResp
 function mapStatusRequest(data: UpdateReportStatusRequest) {
   return {
     newStatus: mapStatusToApi(data.newStatus),
+    priority: mapPriorityToApi(data.priority),
+    assignedToId: data.assignedToId ?? null,
     message: data.message,
   };
 }

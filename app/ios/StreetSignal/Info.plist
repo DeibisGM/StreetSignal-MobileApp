@@ -35,7 +35,7 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>StreetSignal necesita acceso a tu ubicacion para guardar la posicion aproximada del reporte.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>StreetSignal necesita acceso a la cámara para tomar fotos de los reportes.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
