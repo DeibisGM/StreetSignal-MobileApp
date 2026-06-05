@@ -1,5 +1,4 @@
 import React from 'react';
-import {View} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {render} from '@testing-library/react-native';
 import {LanguageProvider} from '../../i18n';

@@ -67,6 +67,8 @@ export default function MyReportsScreen(_props: Props) {
     return () => {
       mountedRef.current = false;
     };
+    // loadReports is defined inside the component and intentionally runs only on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleRefresh() {
