@@ -277,7 +277,7 @@ export default function HomeScreen() {
           ListHeaderComponent={
             <View style={styles.listHeader}>
               <View style={styles.listHeaderLeft}>
-                <Text style={styles.listHeaderTitle}>{h.myReports}</Text>
+                <Text style={styles.listHeaderTitle}>{t.navigation.reports}</Text>
               </View>
               <View
                 style={styles.listHeaderCount}
