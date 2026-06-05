@@ -1,4 +1,4 @@
-import {Platform} from 'react-native';
+﻿import { Platform } from 'react-native';
 
 function getDevApiBaseUrl(): string {
   if (Platform.OS === 'android') {
@@ -27,7 +27,7 @@ export const REPORT_STATUSES = [
 
 export const REPORT_STATUS_LABELS: Record<string, string> = {
   Pending: 'Pendiente',
-  InReview: 'En revisión',
+  InReview: 'En revision',
   Assigned: 'Asignado',
   InProgress: 'En proceso',
   Resolved: 'Resuelto',

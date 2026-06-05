@@ -5,13 +5,14 @@ import type {Category} from '../../types';
 
 interface CategoryPickerProps {
   categories: Category[];
-  selectedId: number | null;
+  selectedId: string | null;
   onSelect: (category: Category) => void;
   label?: string;
   testID?: string;
 }
 
 export function CategoryPicker({categories, selectedId, onSelect, label, testID}: CategoryPickerProps) {
+  const items = Array.isArray(categories) ? categories : [];
   return (
     <View testID={testID ?? 'category-picker'} style={styles.wrapper}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
@@ -20,7 +21,7 @@ export function CategoryPicker({categories, selectedId, onSelect, label, testID}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}
         keyboardShouldPersistTaps="handled">
-        {categories.map(cat => {
+        {items.map(cat => {
           const isSelected = cat.id === selectedId;
           return (
             <TouchableOpacity

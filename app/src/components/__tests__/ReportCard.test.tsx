@@ -7,7 +7,7 @@ const mockReport: Report = {
   id: '1',
   title: 'Bache en Av. 7a con Calle 45',
   description: 'Bache profundo de 30 cm que daña vehículos.',
-  categoryId: 2,
+  categoryId: '2',
   category: 'Vías',
   status: 'Pending',
   latitude: 4.624,

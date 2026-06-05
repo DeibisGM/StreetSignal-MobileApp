@@ -34,7 +34,7 @@ export interface ImageAttachment {
 export interface CreateReportRequest {
   title: string;
   description: string;
-  categoryId: number;
+  categoryId: string;
   latitude: number;
   longitude: number;
   address?: string;
@@ -53,7 +53,7 @@ export interface UpdateReportStatusRequest {
 
 export interface StaffReportFilters {
   status?: ReportStatus;
-  categoryId?: number;
+  categoryId?: string;
   search?: string;
   startDate?: string;
   endDate?: string;

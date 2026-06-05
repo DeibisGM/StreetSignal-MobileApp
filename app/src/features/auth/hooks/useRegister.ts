@@ -1,6 +1,6 @@
 import {useRef, useState} from 'react';
 import {authService} from '../../../services/auth/authService';
-import {storageService} from '../../../storage/auth/storageService';
+import {storageService} from '../../../storage'; // Keychain-backed
 import {sessionManager} from '../../../api/sessionManager';
 import {isValidEmail} from '../../../utils';
 

@@ -21,7 +21,7 @@ export interface User {
 }
 
 export interface Category {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   icon?: string;
@@ -56,7 +56,7 @@ export interface Report {
   id: string;
   title: string;
   description: string;
-  categoryId: number;
+  categoryId: string;
   category: string;
   status: ReportStatus;
   latitude: number;
