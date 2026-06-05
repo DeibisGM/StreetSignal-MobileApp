@@ -217,6 +217,7 @@ export default function CreateReportScreen() {
       });
 
       await storageService.removeItem(STORAGE_KEYS.REPORT_DRAFT);
+      await storageService.removeItem(STORAGE_KEYS.STAFF_REPORTS_CACHE);
 
       setTitle('');
       setDescription('');

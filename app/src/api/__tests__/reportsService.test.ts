@@ -1,5 +1,5 @@
 import {apiClient} from '../client';
-import {reportsService} from '../reportsService';
+import {buildReportsQueryPath, reportsService} from '../reportsService';
 
 jest.mock('../client');
 
@@ -97,5 +97,17 @@ describe('reportsService.updateReportStatus', () => {
     });
     expect(result.id).toBe('report-1');
     expect(result.status).toBe('InProgress');
+  });
+
+  it('builds the staff reports query string from active filters', () => {
+    expect(
+      buildReportsQueryPath({
+        status: 'InReview',
+        categoryId: 'cat-2',
+        search: 'bache',
+        page: 3,
+        pageSize: 20,
+      }),
+    ).toBe('/reports?status=InReview&categoryId=cat-2&search=bache&page=3&pageSize=20');
   });
 });

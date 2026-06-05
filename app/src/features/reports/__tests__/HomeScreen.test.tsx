@@ -11,6 +11,9 @@ jest.mock('@react-navigation/native', () => ({
     navigate: jest.fn(),
     getParent: () => ({navigate: jest.fn()}),
   }),
+  useFocusEffect: (cb: () => unknown) => {
+    require('react').useEffect(cb, []);
+  },
 }));
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({top: 0, bottom: 0, left: 0, right: 0}),
