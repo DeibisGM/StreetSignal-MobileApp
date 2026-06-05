@@ -109,7 +109,6 @@ export default function CreateReportScreen() {
       }
     })();
 
-    void captureLocation();
 
     return () => {
       mounted = false;
@@ -155,9 +154,6 @@ export default function CreateReportScreen() {
     }
     if (categoryId === null) {
       errs.category = 'Selecciona una categoria.';
-    }
-    if (location === null) {
-      errs.location = 'Obtén tu ubicacion para continuar.';
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -300,7 +296,7 @@ export default function CreateReportScreen() {
       setLocation(null);
       setLocationMessage(null);
       setErrors({});
-      setToastMessage('¡Reporte enviado con éxito!');
+      setToastMessage('Reporte enviado con exito!');
 
       setTimeout(() => {
         navigation.navigate('HomeTab', {screen: 'Home'});
@@ -309,12 +305,12 @@ export default function CreateReportScreen() {
       if (err instanceof ApiError) {
         if (err.statusCode === 401) {
           Alert.alert(
-            'Sesión expirada',
-            'Tu sesión ha caducado. Inicia sesión nuevamente.',
+            'Sesion expirada',
+            'Tu sesion ha caducado. Inicia sesion nuevamente.',
           );
         } else if (err.statusCode === 400) {
           Alert.alert(
-            'Datos inválidos',
+            'Datos invalidos',
             err.message || 'Revisa el formulario e intenta nuevamente.',
           );
         } else {
@@ -322,8 +318,8 @@ export default function CreateReportScreen() {
         }
       } else {
         Alert.alert(
-          'Sin conexión',
-          'Verifica tu conexión e intenta nuevamente.',
+          'Sin conexion',
+          'Verifica tu conexion e intenta nuevamente.',
         );
       }
     } finally {
@@ -353,7 +349,7 @@ export default function CreateReportScreen() {
         showsVerticalScrollIndicator={false}>
         <AppTextInput
           label="Titulo"
-          placeholder="¿Que problema detectaste?"
+          placeholder="Que problema detectaste?"
           value={title}
           onChangeText={text => {
             setTitle(text);
@@ -438,7 +434,7 @@ export default function CreateReportScreen() {
                 void captureLocation();
               }}
               accessibilityRole="button"
-              accessibilityLabel="Reintentar ubicación"
+              accessibilityLabel="Reintentar ubicacion"
               testID="location-retry">
               <Text style={styles.locationRetry}>Buscar otra vez</Text>
             </TouchableOpacity>

@@ -75,6 +75,45 @@ function showPermissionDeniedAlert(): void {
   );
 }
 
+function formatApproximateAddress(address: {
+  road?: string;
+  pedestrian?: string;
+  neighbourhood?: string;
+  suburb?: string;
+  city?: string;
+  town?: string;
+  village?: string;
+  county?: string;
+  state?: string;
+  country?: string;
+}): string | null {
+  const locality =
+    address.city ??
+    address.town ??
+    address.village ??
+    address.county ??
+    address.state ??
+    address.country ??
+    null;
+
+  const street =
+    address.road ?? address.pedestrian ?? address.neighbourhood ?? address.suburb ?? null;
+
+  if (street && locality) {
+    return `${street}, ${locality}`;
+  }
+
+  if (street) {
+    return street;
+  }
+
+  return locality;
+}
+
+function formatCoordinateFallback(coords: Coordinates): string {
+  return `Ubicacion aproximada: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`;
+}
+
 async function requestAndroidLocationPermission(): Promise<boolean> {
   const permission = PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION;
   const result = await PermissionsAndroid.request(permission);
@@ -208,7 +247,7 @@ export async function getCurrentCoords(): Promise<Coordinates | null> {
 
 export async function reverseGeocode(coords: Coordinates): Promise<string | null> {
   const url =
-    `https://nominatim.openstreetmap.org/reverse?format=jsonv2` +
+    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18` +
     `&lat=${encodeURIComponent(String(coords.lat))}` +
     `&lon=${encodeURIComponent(String(coords.lng))}`;
 
@@ -217,6 +256,8 @@ export async function reverseGeocode(coords: Coordinates): Promise<string | null
       fetch(url, {
         headers: {
           Accept: 'application/json',
+          'Accept-Language': 'es',
+          'User-Agent': 'StreetSignal-MobileApp/1.0',
         },
       }),
     );
@@ -225,8 +266,24 @@ export async function reverseGeocode(coords: Coordinates): Promise<string | null
       return null;
     }
 
-    const data = (await response.json()) as {display_name?: string};
-    const address = data.display_name?.trim() || null;
+    const data = (await response.json()) as {
+      display_name?: string;
+      address?: {
+        road?: string;
+        pedestrian?: string;
+        neighbourhood?: string;
+        suburb?: string;
+        city?: string;
+        town?: string;
+        village?: string;
+        county?: string;
+        state?: string;
+        country?: string;
+      };
+    };
+    const address =
+      data.display_name?.trim() ||
+      (data.address ? formatApproximateAddress(data.address) : null);
 
     if (address) {
       await writeCache({
@@ -236,8 +293,8 @@ export async function reverseGeocode(coords: Coordinates): Promise<string | null
       });
     }
 
-    return address;
+    return address ?? formatCoordinateFallback(coords);
   } catch {
-    return null;
+    return formatCoordinateFallback(coords);
   }
 }

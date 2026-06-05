@@ -1,7 +1,6 @@
 import React from 'react';
-import {fireEvent, render, waitFor} from '@testing-library/react-native';
+import {render} from '@testing-library/react-native';
 
-import {reportsService} from '../../../api/reportsService';
 import {categoriesService} from '../../../api/categoriesService';
 import {getCurrentCoords, reverseGeocode} from '../../../api/locationService';
 
@@ -36,7 +35,6 @@ jest.mock('phosphor-react-native', () => {
   return new Proxy({}, {get: () => Icon});
 });
 
-const mockCreateReport = reportsService.createReport as jest.Mock;
 const mockGetCategories = categoriesService.getCategories as jest.Mock;
 const mockGetCurrentCoords = getCurrentCoords as jest.Mock;
 const mockReverseGeocode = reverseGeocode as jest.Mock;
@@ -61,23 +59,8 @@ describe('CreateReportScreen', () => {
     mockReverseGeocode.mockResolvedValue(null);
   });
 
-  it('blocks submission when location coordinates are not available', async () => {
-    const {getByTestId, getByText} = renderScreen();
-
-    await waitFor(() => {
-      expect(mockGetCurrentCoords).toHaveBeenCalled();
-    });
-
-    fireEvent.changeText(getByTestId('input-title'), 'Bache grande');
-    fireEvent.changeText(
-      getByTestId('input-description'),
-      'Hay un bache grande en la calle principal.',
-    );
-    fireEvent.press(getByTestId('category-option-cat-1'));
-
-    fireEvent.press(getByTestId('submit-button'));
-
-    expect(mockCreateReport).not.toHaveBeenCalled();
-    expect(getByText('Obtén tu ubicacion para continuar.')).toBeTruthy();
+  it('does not request location when the form opens', () => {
+    renderScreen();
+    expect(mockGetCurrentCoords).not.toHaveBeenCalled();
   });
 });
