@@ -1,5 +1,6 @@
 module.exports = {
   preset: '@react-native/jest-preset',
+  setupFilesAfterFramework: ['<rootDir>/jest.setup.js'],
   transformIgnorePatterns: [
     'node_modules/(?!(react-native|@react-native|@react-native-community|@react-native-async-storage|react-native-keychain|@react-navigation|react-native-screens|react-native-safe-area-context)/)',
   ],
