@@ -47,6 +47,19 @@ type TabIconProps = {color: string; focused: boolean};
 
 const iconSize = 24;
 
+function TabIconHouse({color, focused}: TabIconProps) {
+  return <House size={iconSize} color={color} weight={focused ? 'fill' : 'regular'} />;
+}
+function TabIconPlus({color}: {color: string}) {
+  return <PlusCircle size={iconSize + 4} color={color} weight="fill" />;
+}
+function TabIconBell({color, focused}: TabIconProps) {
+  return <Bell size={iconSize} color={color} weight={focused ? 'fill' : 'regular'} />;
+}
+function TabIconClipboard({color}: {color: string}) {
+  return <ClipboardText size={iconSize} color={color} weight="fill" />;
+}
+
 export default function AppNavigator() {
   const {user} = useAuth();
   const isStaff = user?.role === 'staff';
@@ -83,9 +96,7 @@ export default function AppNavigator() {
           component={StaffStackNavigator}
           options={{
             title: 'Reportes',
-            tabBarIcon: ({color}: TabIconProps) => (
-              <ClipboardText size={iconSize} color={color} weight="fill" />
-            ),
+            tabBarIcon: TabIconClipboard,
           }}
         />
       ) : (
@@ -95,9 +106,7 @@ export default function AppNavigator() {
             component={HomeStackNavigator}
             options={{
               title: 'Inicio',
-              tabBarIcon: ({color, focused}: TabIconProps) => (
-                <House size={iconSize} color={color} weight={focused ? 'fill' : 'regular'} />
-              ),
+              tabBarIcon: TabIconHouse,
             }}
           />
           <Tab.Screen
@@ -108,9 +117,7 @@ export default function AppNavigator() {
               headerShown: true,
               headerTitle: 'Nuevo reporte',
               ...HEADER,
-              tabBarIcon: ({color}: TabIconProps) => (
-                <PlusCircle size={iconSize + 4} color={color} weight="fill" />
-              ),
+              tabBarIcon: TabIconPlus,
               tabBarLabelStyle: {fontSize: 11, fontWeight: '700'},
             }}
           />
@@ -122,9 +129,7 @@ export default function AppNavigator() {
         component={NotificationsScreen}
         options={{
           title: 'Alertas',
-          tabBarIcon: ({color, focused}: TabIconProps) => (
-            <Bell size={iconSize} color={color} weight={focused ? 'fill' : 'regular'} />
-          ),
+          tabBarIcon: TabIconBell,
         }}
       />
     </Tab.Navigator>

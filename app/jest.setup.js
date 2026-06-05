@@ -1,3 +1,4 @@
+/* eslint-env jest, node */
 // Mock AsyncStorage so tests don't hit real storage
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),

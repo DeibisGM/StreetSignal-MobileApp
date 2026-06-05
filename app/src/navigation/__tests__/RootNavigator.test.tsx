@@ -24,7 +24,6 @@ jest.mock('../../api/sessionManager', () => ({
 }));
 
 jest.mock('react-native-safe-area-context', () => {
-  const React = require('react');
   const {View} = require('react-native');
   return {
     SafeAreaView: ({children, ...props}: React.ComponentProps<typeof View>) => (
