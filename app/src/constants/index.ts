@@ -2,9 +2,7 @@ import { Platform } from 'react-native';
 
 function getDevApiBaseUrl(): string {
   if (Platform.OS === 'android') {
-    // Physical device on LAN — use your PC's LAN IP.
-    // Update this if your router/dhcp changes the IP.
-    return 'http://192.168.0.213:5000/api';
+    return 'http://localhost:5000/api';
   }
 
   if (Platform.OS === 'web') {
@@ -34,6 +32,13 @@ export const REPORT_STATUS_LABELS: Record<string, string> = {
   InProgress: 'En proceso',
   Resolved: 'Resuelto',
   Rejected: 'Rechazado',
+};
+
+export const REPORT_PRIORITY_LABELS: Record<string, string> = {
+  Low: 'Baja',
+  Medium: 'Media',
+  High: 'Alta',
+  Critical: 'Critica',
 };
 
 export const STORAGE_KEYS = {
