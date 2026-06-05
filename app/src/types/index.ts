@@ -59,8 +59,8 @@ export interface Report {
   categoryId: string;
   category: string;
   status: ReportStatus;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   address?: string;
   createdById: string;
   createdByName: string;

@@ -52,8 +52,8 @@ interface RawReportSummaryDto {
   status: RawReportStatus;
   category: RawCategoryDto;
   imageUrl?: string | null;
-  latitude: number;
-  longitude: number;
+  latitude?: number | null;
+  longitude?: number | null;
   address?: string | null;
   createdBy: RawUserBasicDto;
   createdAt: string;
@@ -175,8 +175,8 @@ function mapReport(raw: RawReportSummaryDto): Report {
     categoryId: 0,
     category: raw.category?.name ?? '',
     status: mapStatus(raw.status),
-    latitude: raw.latitude,
-    longitude: raw.longitude,
+    latitude: raw.latitude ?? null,
+    longitude: raw.longitude ?? null,
     address: raw.address ?? undefined,
     createdById: createdBy.id,
     createdByName: createdBy.fullName,
