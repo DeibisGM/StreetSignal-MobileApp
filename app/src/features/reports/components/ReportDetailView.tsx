@@ -1,6 +1,6 @@
 import React from 'react';
 import {Image, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {MapPin} from 'phosphor-react-native';
+import {ImageBroken, MapPin} from 'phosphor-react-native';
 
 import {StatusBadge, UpdateTimelineItem} from '../../../components';
 import {Colors, BorderRadius, Spacing} from '../../../theme';
@@ -18,7 +18,9 @@ export function ReportDetailView({
   children,
   testID,
 }: ReportDetailViewProps) {
+  const [imgError, setImgError] = React.useState(false);
   const updates = report.updates ?? [];
+  const showImage = !!report.imageUrl && !imgError;
 
   return (
     <ScrollView
@@ -27,17 +29,20 @@ export function ReportDetailView({
       showsVerticalScrollIndicator={false}
       testID={testID ?? 'report-detail-view'}>
       <View style={styles.card}>
-        {report.imageUrl ? (
+        {showImage ? (
           <Image
             source={{uri: report.imageUrl}}
             style={styles.image}
             resizeMode="cover"
             accessibilityLabel="Foto del reporte"
+            onError={() => setImgError(true)}
           />
         ) : (
           <View style={styles.imagePlaceholder}>
-            <MapPin size={28} color={Colors.primary} weight="light" />
-            <Text style={styles.imagePlaceholderText}>Sin foto</Text>
+            <ImageBroken size={32} color={Colors.outlineVariant} weight="light" />
+            <Text style={styles.imagePlaceholderText}>
+              {imgError ? 'No se pudo cargar la imagen' : 'Sin foto'}
+            </Text>
           </View>
         )}
 
@@ -54,7 +59,10 @@ export function ReportDetailView({
           <Text style={styles.meta}>{formatDate(report.createdAt)}</Text>
 
           {report.address ? (
-            <Text style={styles.address}>{report.address}</Text>
+            <View style={styles.addressRow}>
+              <MapPin size={13} color={Colors.onSurfaceVariant} weight="fill" />
+              <Text style={styles.address}>{report.address}</Text>
+            </View>
           ) : null}
 
           <Text style={styles.description}>{report.description}</Text>
@@ -152,10 +160,16 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
     lineHeight: 18,
   },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
   address: {
-    fontSize: 14,
-    color: Colors.onSurface,
-    lineHeight: 20,
+    flex: 1,
+    fontSize: 13,
+    color: Colors.onSurfaceVariant,
+    lineHeight: 18,
   },
   description: {
     fontSize: 15,

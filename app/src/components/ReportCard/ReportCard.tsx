@@ -53,8 +53,12 @@ export function ReportCard({report, onPress, testID}: ReportCardProps) {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.category} numberOfLines={1}>{report.category}</Text>
-        <Text style={styles.title} numberOfLines={2}>{report.title}</Text>
+        <Text style={styles.category} numberOfLines={1}>
+          {report.category}
+        </Text>
+        <Text style={styles.title} numberOfLines={2}>
+          {report.title}
+        </Text>
         <Text style={styles.author} numberOfLines={1}>
           {report.createdByName}
         </Text>

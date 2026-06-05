@@ -14,6 +14,7 @@ export type HomeStackParamList = {
   Home: undefined;
   MyReports: undefined;
   ReportDetail: {reportId: string};
+  CreateReport: undefined;
 };
 
 // Staff stack --------------------------------------------------------------
@@ -27,9 +28,10 @@ export type StaffStackParamList = {
 
 export type AppTabParamList = {
   HomeTab: NavigatorScreenParams<HomeStackParamList>;
-  CreateReport: undefined;
-  StaffTab: NavigatorScreenParams<StaffStackParamList>;
   Notifications: undefined;
+  Profile: undefined;
+  Logout: undefined;
+  StaffTab: NavigatorScreenParams<StaffStackParamList>;
 };
 
 // Root navigator -----------------------------------------------------------

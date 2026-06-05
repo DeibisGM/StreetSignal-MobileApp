@@ -1,4 +1,8 @@
 {
   "name": "StreetSignal",
-  "displayName": "StreetSignal"
+  "displayName": "StreetSignal",
+  "permissions": [
+    "camera",
+    "photo-library"
+  ]
 }
