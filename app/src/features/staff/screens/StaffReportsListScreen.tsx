@@ -148,12 +148,12 @@ export default function StaffReportsListScreen() {
     }
   }
 
-  async function loadReports(
+  const loadReports = React.useCallback(async (
     nextFilter: StaffReportsFilterState,
     nextPage = 1,
     mode: 'replace' | 'append' = 'replace',
     options?: {skipCache?: boolean},
-  ) {
+  ) => {
     if (!mountedRef.current) {return;}
 
     if (mode === 'replace') {
@@ -197,8 +197,7 @@ export default function StaffReportsListScreen() {
         setRefreshing(false);
       }
     }
-  }
-
+  }, []);
   async function initialize() {
     setInitializing(true);
     try {
@@ -236,6 +235,7 @@ export default function StaffReportsListScreen() {
   }, []);
 
   useFocusEffect(
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     React.useCallback(() => {
       if (!mountedRef.current) {return undefined;}
       const refreshOnFocus = async () => {
@@ -251,8 +251,26 @@ export default function StaffReportsListScreen() {
       };
       refreshOnFocus().catch(() => {});
       return undefined;
-    }, [filter]),
-  );
+    }, [filter]),  // ← solo filter, sin loadReports
+  );useFocusEffect(
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      React.useCallback(() => {
+        if (!mountedRef.current) {return undefined;}
+        const refreshOnFocus = async () => {
+          const cacheKey = buildFilterKey(filter);
+          const cache = await readCache(cacheKey);
+          if (cache && mountedRef.current) {
+            setReports(cache.items);
+            setPage(cache.page);
+            setTotal(cache.total);
+            setHasNextPage(cache.page * cache.pageSize < cache.total);
+          }
+          await loadReports(filter, 1, 'replace', {skipCache: !!cache});
+        };
+        refreshOnFocus().catch(() => {});
+        return undefined;
+      }, [filter]),  // ← solo filter, sin loadReports
+    );
 
   async function applyFilter(nextFilter: StaffReportsFilterState) {
     if (!mountedRef.current) {return;}
