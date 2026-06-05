@@ -421,6 +421,7 @@ export default function CreateReportScreen() {
           onPress={() => {
             void captureLocation();
           }}
+          loading={locationLoading}
           disabled={submitting || loadingCategories || locationLoading}
           testID="location-field"
         />
@@ -439,7 +440,7 @@ export default function CreateReportScreen() {
               accessibilityRole="button"
               accessibilityLabel="Reintentar ubicación"
               testID="location-retry">
-              <Text style={styles.locationRetry}>Reintentar</Text>
+              <Text style={styles.locationRetry}>Buscar otra vez</Text>
             </TouchableOpacity>
           </View>
         ) : null}
