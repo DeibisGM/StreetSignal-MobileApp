@@ -261,6 +261,17 @@ export const translations = {
     },
     notifications: {
       title: 'Notificaciones',
+      loadError: 'No se pudieron cargar las notificaciones.',
+      empty: {
+        title: 'Sin notificaciones',
+        subtitle: 'Cuando haya actualizaciones en tus reportes aparecerán aquí.',
+      },
+      system: {
+        statusTitle: 'Reporte actualizado',
+        statusBody: (statusLabel: string) => `Tu reporte cambió a ${statusLabel}.`,
+        commentTitle: 'Nuevo comentario',
+        commentBody: 'Tienes un nuevo comentario en tu reporte.',
+      },
     },
     profile: {
       header: 'Mi perfil',
@@ -508,6 +519,17 @@ export const translations = {
     },
     notifications: {
       title: 'Notifications',
+      loadError: 'Could not load notifications.',
+      empty: {
+        title: 'No notifications',
+        subtitle: 'When there are updates on your reports they will appear here.',
+      },
+      system: {
+        statusTitle: 'Report updated',
+        statusBody: (statusLabel: string) => `Your report changed to ${statusLabel}.`,
+        commentTitle: 'New comment',
+        commentBody: 'You have a new comment on your report.',
+      },
     },
     profile: {
       header: 'My profile',

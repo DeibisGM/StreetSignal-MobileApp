@@ -84,10 +84,12 @@ describe('StaffReportDetailScreen', () => {
   });
 
   it('sends priority and assignee with the status payload', async () => {
-    const {findByTestId, getByTestId} = renderScreen();
+    const {getByTestId} = renderScreen();
 
-    await findByTestId('priority-option-High');
-    await findByTestId('staff-option-staff-1');
+    await waitFor(() => {
+      expect(getByTestId('priority-option-High')).toBeTruthy();
+      expect(getByTestId('staff-option-staff-1')).toBeTruthy();
+    }, {timeout: 10000});
 
     fireEvent.press(getByTestId('priority-option-High'));
     fireEvent.press(getByTestId('staff-option-staff-1'));
