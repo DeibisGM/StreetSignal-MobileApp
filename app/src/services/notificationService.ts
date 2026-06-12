@@ -1,4 +1,7 @@
-import notifee, {AndroidImportance, AuthorizationStatus} from '@notifee/react-native';
+import notifee, {
+  AndroidImportance,
+  AuthorizationStatus,
+} from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Platform} from 'react-native';
 import {notificationsService} from '../api/notificationsService';
@@ -57,29 +60,35 @@ async function showLocalNotification(title: string, body: string): Promise<void>
   }
 }
 
-/**
- * Returns the FCM registration token for this device.
- *
- * To enable this:
- *   1. Create a Firebase project and download google-services.json
- *   2. Place google-services.json in android/app/
- *   3. npm install @react-native-firebase/app @react-native-firebase/messaging
- *   4. In android/build.gradle add:
- *        classpath 'com.google.gms:google-services:4.4.2'
- *   5. In android/app/build.gradle add at the bottom:
- *        apply plugin: 'com.google.gms.google-services'
- *   6. For iOS: download GoogleService-Info.plist, add to ios/ and run pod install
- */
-/**
- * Returns null until Firebase is configured.
- * To enable: follow the setup instructions in registerWithServer() below.
- */
-async function getDeviceToken(): Promise<string | null> {
-  return null;
+async function getDeviceToken(allowPermissionPrompt = false): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    return null;
+  }
+
+  try {
+    const messagingModule = await import('@react-native-firebase/messaging');
+    const fcm = messagingModule.default();
+
+    const permission = await fcm.hasPermission();
+    if (permission === messagingModule.AuthorizationStatus.NOT_DETERMINED) {
+      if (!allowPermissionPrompt) {
+        return null;
+      }
+    }
+
+    if (!fcm.isDeviceRegisteredForRemoteMessages) {
+      await fcm.registerDeviceForRemoteMessages();
+    }
+
+    const token = await fcm.getToken();
+    return token || null;
+  } catch {
+    return null;
+  }
 }
 
-async function registerWithServer(): Promise<void> {
-  const token = await getDeviceToken();
+async function registerWithServer(allowPermissionPrompt = false): Promise<void> {
+  const token = await getDeviceToken(allowPermissionPrompt);
   if (!token) {
     return;
   }

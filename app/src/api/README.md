@@ -13,7 +13,7 @@ Single HTTP client for all StreetSignal backend communication.
 | `authService.ts` | `/auth/*` |
 | `reportsService.ts` | `/reports/*` + `/reports/:id/updates` |
 | `categoriesService.ts` | `/categories` |
-| `notificationsService.ts` | `/notifications/*` + `/notifications/device-token` |
+| `notificationsService.ts` | `/notifications/*` + `/device-tokens` |
 
 ## Configuration
 

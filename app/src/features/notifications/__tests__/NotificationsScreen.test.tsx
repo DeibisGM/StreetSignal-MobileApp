@@ -8,6 +8,10 @@ import {notificationsService} from '../../../api/notificationsService';
 jest.mock('../../../api/notificationsService');
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({navigate: jest.fn()}),
+  useFocusEffect: (callback: () => void) => {
+    const React = require('react');
+    React.useEffect(() => callback(), [callback]);
+  },
 }));
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({top: 0, bottom: 0, left: 0, right: 0}),

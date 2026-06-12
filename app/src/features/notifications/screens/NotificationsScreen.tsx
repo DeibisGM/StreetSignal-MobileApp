@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import type {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
 import {Bell} from 'phosphor-react-native';
 
@@ -21,6 +21,7 @@ import {useLanguage} from '../../../i18n';
 import {BorderRadius, Colors, Spacing} from '../../../theme';
 import type {Notification} from '../../../types';
 import type {AppTabParamList} from '../../../navigation/types';
+import {formatNotificationForList} from '../notificationText';
 
 type TabNav = BottomTabNavigationProp<AppTabParamList>;
 
@@ -37,7 +38,7 @@ export default function NotificationsScreen() {
   const [error, setError] = React.useState<string | null>(null);
   const mountedRef = React.useRef(true);
 
-  async function load() {
+  const load = React.useCallback(async () => {
     if (!mountedRef.current) {
       return;
     }
@@ -60,7 +61,7 @@ export default function NotificationsScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }
+  }, [nt.loadError]);
 
   React.useEffect(() => {
     mountedRef.current = true;
@@ -68,8 +69,13 @@ export default function NotificationsScreen() {
     return () => {
       mountedRef.current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [load]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      load().catch(() => {});
+    }, [load]),
+  );
 
   function handleRefresh() {
     setRefreshing(true);
@@ -77,11 +83,17 @@ export default function NotificationsScreen() {
   }
 
   async function handleTap(notif: Notification) {
-    // Optimistically mark as read
+    // Optimistically mark as read, but revert if the API rejects.
     setItems(prev =>
       prev.map(n => (n.id === notif.id ? {...n, isRead: true} : n)),
     );
-    notificationsService.markAsRead(notif.id).catch(() => {});
+    try {
+      await notificationsService.markAsRead(notif.id);
+    } catch {
+      setItems(prev =>
+        prev.map(n => (n.id === notif.id ? {...n, isRead: false} : n)),
+      );
+    }
 
     if (!notif.reportId) {
       return;
@@ -188,6 +200,9 @@ type NotificationItemProps = {
 };
 
 function NotificationItem({notif, onPress, formatDate}: NotificationItemProps) {
+  const {t} = useLanguage();
+  const local = formatNotificationForList(notif, t);
+
   return (
     <TouchableOpacity
       style={[styles.item, notif.isRead ? styles.itemRead : styles.itemUnread]}
@@ -201,10 +216,10 @@ function NotificationItem({notif, onPress, formatDate}: NotificationItemProps) {
         <Text
           style={[styles.itemTitle, notif.isRead && styles.itemTitleRead]}
           numberOfLines={1}>
-          {notif.title}
+          {local.title}
         </Text>
         <Text style={styles.itemMessage} numberOfLines={2}>
-          {notif.message}
+          {local.message}
         </Text>
         <Text style={styles.itemDate}>{formatDate(notif.createdAt)}</Text>
       </View>

@@ -4,7 +4,7 @@ function getDevApiBaseUrl(): string {
   if (Platform.OS === 'android') {
     // Physical device on LAN — use your PC's LAN IP.
     // Update this if your router/dhcp changes the IP.
-    return 'http://localhost:5000/api';
+    return 'http://192.168.18.10:5000/api';
   }
 
   if (Platform.OS === 'web') {
@@ -43,5 +43,5 @@ export const STORAGE_KEYS = {
   REPORT_DRAFT: '@streetsignal/report_draft',
   CACHED_REPORTS: '@streetsignal/cached_reports',
   NOTIF_PERMISSION_ASKED: '@streetsignal/notif_permission_asked',
-  KNOWN_NOTIF_IDS: '@streetsignal/known_notif_ids',
+  KNOWN_NOTIF_IDS_PREFIX: '@streetsignal/known_notif_ids:',
 } as const;

@@ -8,6 +8,7 @@ import {useNotificationPolling} from '../hooks/useNotificationPolling';
 import {AuthContext, AuthContextValue} from './AuthContext';
 import AuthNavigator from './AuthNavigator';
 import AppNavigator from './AppNavigator';
+import {useLanguage} from '../i18n';
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -16,6 +17,7 @@ const RESTORE_TIMEOUT_MS = 3_000;
 export default function RootNavigator() {
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [user, setUser] = useState<User | null>(null);
+  const {t} = useLanguage();
   // Ref para saber si login() fue llamado antes de que termine restoreSession
   const loginCalledRef = useRef(false);
 
@@ -70,16 +72,21 @@ export default function RootNavigator() {
     sessionManager.setUnauthorizedHandler(logout);
   }, [logout]);
 
-  // Request notification permission and register device token once authenticated
+  // Request notification permission and register the device token only after
+  // a real login. Session restore should not prompt the user again.
   useEffect(() => {
-    if (status !== 'authenticated') {
+    if (status !== 'authenticated' || !loginCalledRef.current) {
+      if (status !== 'authenticated') {
+        return;
+      }
+      notificationService.registerWithServer(false).catch(() => {});
       return;
     }
     notificationService.requestPermission().catch(() => {});
-    notificationService.registerWithServer().catch(() => {});
+    notificationService.registerWithServer(true).catch(() => {});
   }, [status]);
 
-  useNotificationPolling(status === 'authenticated');
+  useNotificationPolling(status === 'authenticated', user?.id, t);
 
   const contextValue: AuthContextValue = {
     isAuthenticated: status === 'authenticated',

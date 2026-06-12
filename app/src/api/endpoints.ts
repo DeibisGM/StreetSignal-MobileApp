@@ -38,7 +38,7 @@ export const ENDPOINTS = {
   },
 
   notifications: {
-    deviceToken: '/notifications/device-token',
+    deviceToken: '/device-tokens',
     list: '/notifications',
     markRead: (id: string) => `/notifications/${id}/read`,
   },

@@ -1,19 +1,30 @@
 import React from 'react';
 import {AppState, AppStateStatus} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type {Translations} from '../i18n';
 import {notificationsService} from '../api/notificationsService';
 import {notificationService} from '../services/notificationService';
 import {STORAGE_KEYS} from '../constants';
+import {formatNotificationForSystem} from '../features/notifications/notificationText';
 
-const POLL_INTERVAL_MS = 90_000;
+const POLL_INTERVAL_MS = 60_000;
 
-export function useNotificationPolling(isAuthenticated: boolean): void {
+export function useNotificationPolling(
+  isAuthenticated: boolean,
+  userId: string | null | undefined,
+  t: Translations,
+): void {
   const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
   const appStateRef = React.useRef<AppStateStatus>(AppState.currentState);
   const pollingRef = React.useRef(false);
 
   const poll = React.useCallback(async () => {
-    if (!isAuthenticated || appStateRef.current !== 'active' || pollingRef.current) {
+    if (
+      !isAuthenticated ||
+      !userId ||
+      appStateRef.current !== 'active' ||
+      pollingRef.current
+    ) {
       return;
     }
     pollingRef.current = true;
@@ -26,32 +37,33 @@ export function useNotificationPolling(isAuthenticated: boolean): void {
         return;
       }
 
-      const raw = await AsyncStorage.getItem(STORAGE_KEYS.KNOWN_NOTIF_IDS);
+      const knownKey = `${STORAGE_KEYS.KNOWN_NOTIF_IDS_PREFIX}${userId}`;
+      const raw = await AsyncStorage.getItem(knownKey);
       const known = new Set<string>(raw ? (JSON.parse(raw) as string[]) : []);
 
       const fresh = response.items.filter(n => !known.has(n.id));
       for (const n of fresh) {
-        await notificationService.showLocalNotification(n.title, n.message);
+        const local = formatNotificationForSystem(n, t);
+        await notificationService.showLocalNotification(local.title, local.body);
         known.add(n.id);
       }
 
       if (fresh.length) {
-        await AsyncStorage.setItem(
-          STORAGE_KEYS.KNOWN_NOTIF_IDS,
-          JSON.stringify([...known]),
-        );
+        await AsyncStorage.setItem(knownKey, JSON.stringify([...known]));
       }
     } catch {
       // Polling errors are non-fatal
     } finally {
       pollingRef.current = false;
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, userId, t]);
 
   React.useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       return;
     }
+
+    poll().catch(() => {});
 
     const subscription = AppState.addEventListener(
       'change',
@@ -71,7 +83,8 @@ export function useNotificationPolling(isAuthenticated: boolean): void {
       subscription.remove();
       if (intervalRef.current !== null) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
-  }, [isAuthenticated, poll]);
+  }, [isAuthenticated, userId, poll]);
 }

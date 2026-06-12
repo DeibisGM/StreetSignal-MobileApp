@@ -1,6 +1,7 @@
 import React from 'react';
 import {act, render, waitFor} from '@testing-library/react-native';
 import {NavigationContainer} from '@react-navigation/native';
+import {LanguageProvider} from '../../i18n';
 import RootNavigator from '../RootNavigator';
 
 jest.mock('../../api/authService', () => ({
@@ -13,6 +14,17 @@ jest.mock('../../storage', () => ({
   storageService: {
     clearSession: jest.fn().mockResolvedValue(undefined),
   },
+}));
+
+jest.mock('../../services/notificationService', () => ({
+  notificationService: {
+    requestPermission: jest.fn().mockResolvedValue(true),
+    registerWithServer: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
+jest.mock('../../hooks/useNotificationPolling', () => ({
+  useNotificationPolling: jest.fn(),
 }));
 
 jest.mock('../../api/sessionManager', () => ({
@@ -65,9 +77,11 @@ const mockUser = {
 
 function renderRoot() {
   return render(
-    <NavigationContainer>
-      <RootNavigator />
-    </NavigationContainer>,
+    <LanguageProvider>
+      <NavigationContainer>
+        <RootNavigator />
+      </NavigationContainer>
+    </LanguageProvider>,
   );
 }
 
