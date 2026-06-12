@@ -2,9 +2,7 @@ import { Platform } from 'react-native';
 
 function getDevApiBaseUrl(): string {
   if (Platform.OS === 'android') {
-    // Physical device on LAN — use your PC's LAN IP.
-    // Update this if your router/dhcp changes the IP.
-    return 'http://192.168.18.10:5000/api';
+    return 'http://localhost:5000/api';
   }
 
   if (Platform.OS === 'web') {
@@ -36,12 +34,17 @@ export const REPORT_STATUS_LABELS: Record<string, string> = {
   Rejected: 'Rechazado',
 };
 
+export const REPORT_PRIORITY_LABELS: Record<string, string> = {
+  Low: 'Baja',
+  Medium: 'Media',
+  High: 'Alta',
+  Critical: 'Critica',
+};
+
 export const STORAGE_KEYS = {
   AUTH_TOKEN: '@streetsignal/auth_token',
   CURRENT_USER: '@streetsignal/current_user',
   LAST_FILTER: '@streetsignal/last_filter',
   REPORT_DRAFT: '@streetsignal/report_draft',
   CACHED_REPORTS: '@streetsignal/cached_reports',
-  NOTIF_PERMISSION_ASKED: '@streetsignal/notif_permission_asked',
-  KNOWN_NOTIF_IDS_PREFIX: '@streetsignal/known_notif_ids:',
 } as const;

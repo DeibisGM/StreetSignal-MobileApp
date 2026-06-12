@@ -3,6 +3,7 @@
   "displayName": "StreetSignal",
   "permissions": [
     "camera",
-    "photo-library"
+    "photo-library",
+    "location"
   ]
 }

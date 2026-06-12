@@ -8,6 +8,8 @@ export type ReportStatus =
   | 'Resolved'
   | 'Rejected';
 
+export type ReportPriority = 'Low' | 'Medium' | 'High' | 'Critical';
+
 export type ReportUpdateType = 'comment' | 'status_change' | 'system';
 
 export interface User {
@@ -60,11 +62,19 @@ export interface Report {
   categoryId: string;
   category: string;
   status: ReportStatus;
+  priority?: ReportPriority | null;
   latitude: number | null;
   longitude: number | null;
   address?: string;
   createdById: string;
   createdByName: string;
+  assignedToId?: string | null;
+  assignedToName?: string | null;
+  assignedTo?: {
+    id: string;
+    fullName: string;
+    role: UserRole;
+  } | null;
   imageUrl?: string;
   images?: ReportImage[];
   updates?: ReportUpdate[];
