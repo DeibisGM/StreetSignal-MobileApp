@@ -1,153 +1,163 @@
 # StreetSignal Mobile App
 
-Aplicación móvil StreetSignal para reportes ciudadanos, seguimiento de casos y notificaciones en tiempo real.
+StreetSignal mobile application for citizen reports, case tracking, and real-time notifications.
 
-Este repositorio contiene la app móvil en `React Native`. El backend vive en el servicio aparte de StreetSignal y debe estar disponible para que el login, los reportes y las notificaciones funcionen correctamente.
+## Research Explanation Video
 
-## Que incluye este repositorio
+Add the link to the research explanation video here:
 
-- App móvil para ciudadano y funcionario.
-- Navegación por stacks y tabs.
-- Login, registro y manejo de sesión.
-- Creación, consulta y seguimiento de reportes.
-- Lista de notificaciones en la app.
-- Registro de token de dispositivo para push notifications.
-- Notificaciones locales con `Notifee`.
+```text
+Research explanation video: https://youtu.be/d3n7BB6u0kg
+```
 
-## Requisitos previos
+This video explains the research process, the problem addressed by StreetSignal, the proposed solution, and the main findings that support the development of the mobile application.
 
-Instala esto antes de intentar correr el proyecto:
+This repository contains the mobile app built with `React Native`. The backend lives in a separate StreetSignal service and must be available for login, reports, and notifications to work correctly.
 
-- `Node.js` 22 o superior.
-- `npm`.
-- `Java JDK 17`.
-- `Android Studio` con Android SDK, platform tools y un emulador configurado.
-- `adb` disponible en el PATH.
-- Para iPhone/iOS: `Xcode` y `CocoaPods` solo en macOS.
-- Un backend de StreetSignal corriendo y accesible desde el dispositivo o emulador.
-- Una cuenta de Firebase configurada para Android push notifications.
+## What This Repository Includes
 
-## Estructura rápida
+* Mobile app for citizens and officials.
+* Navigation using stacks and tabs.
+* Login, registration, and session management.
+* Creation, consultation, and tracking of reports.
+* In-app notification list.
+* Device token registration for push notifications.
+* Local notifications with `Notifee`.
+
+## Prerequisites
+
+Install the following before trying to run the project:
+
+* `Node.js` 22 or higher.
+* `npm`.
+* `Java JDK 17`.
+* `Android Studio` with Android SDK, platform tools, and a configured emulator.
+* `adb` available in the PATH.
+* For iPhone/iOS: `Xcode` and `CocoaPods`, only on macOS.
+* A StreetSignal backend running and accessible from the device or emulator.
+* A Firebase account configured for Android push notifications.
+
+## Quick Structure
 
 ```text
 /
 ├── README.md
 ├── docs/
-│   └── api-contracts/        Contratos de API y recursos de apoyo
+│   └── api-contracts/        API contracts and supporting resources
 └── app/
-    ├── android/              Proyecto Android nativo
-    ├── ios/                  Proyecto iOS nativo
-    ├── src/                  Código principal de la app
-    ├── package.json          Scripts y dependencias
-    ├── .env                  Variables de entorno opcionales
-    └── .env.example          Ejemplo de configuración
+    ├── android/              Native Android project
+    ├── ios/                  Native iOS project
+    ├── src/                  Main app source code
+    ├── package.json          Scripts and dependencies
+    ├── .env                  Optional environment variables
+    └── .env.example          Configuration example
 ```
 
-## Antes de empezar con notificaciones
+## Before Starting with Notifications
 
-Para que las notificaciones sirvan se debe de cumplir con estas 3 cosas:
+For notifications to work, these 3 requirements must be met:
 
-1. La app debe poder llegar al backend.
-2. El dispositivo debe registrar su token en `POST /device-tokens`.
-3. El backend debe enviar notificaciones push usando ese token.
+1. The app must be able to reach the backend.
+2. The device must register its token through `POST /device-tokens`.
+3. The backend must send push notifications using that token.
 
-Además, en Android se necesita:
+Additionally, on Android, the following is required:
 
-- El archivo `app/android/app/google-services.json`.
-- Permisos de notificación en Android 13+.
-- Probar idealmente en un dispositivo real para push notifications. Las notificaciones locales pueden verse en emulador, pero las push de FCM son mas confiables en un teléfono real.
+* The file `app/android/app/google-services.json`.
+* Notification permissions on Android 13+.
+* Ideally, push notifications should be tested on a real device. Local notifications can be seen on an emulator, but FCM push notifications are more reliable on a real phone.
 
-## Configuración del backend
+## Backend Configuration
 
-La app consume el backend de StreetSignal desde `BASE_URL`.
+The app consumes the StreetSignal backend through `BASE_URL`.
 
-### URL por defecto
+### Default URL
 
-Si no se cambias, la app usa la URL definida en `app/src/constants/index.ts`.
+If no changes are made, the app uses the URL defined in `app/src/constants/index.ts`.
 
-### Opción recomendada para desarrollo
+### Recommended Option for Development
 
-Si se corre el backend localmente:
+If the backend is running locally:
 
-- Android emulator: usa `adb reverse tcp:5000 tcp:5000` o se debe configurar la IP que tiene la computadora.
-- iOS simulator: `http://localhost:5000/api`.
-- Dispositivo fisico: se usa la IP LAN de la computadora, por ejemplo `http://192.168.1.20:5000/api`.
+* Android emulator: use `adb reverse tcp:5000 tcp:5000` or configure the computer’s IP address.
+* iOS simulator: `http://localhost:5000/api`.
+* Physical device: use the computer’s LAN IP address, for example `http://192.168.1.20:5000/api`.
 
-### Variables de entorno opcionales
+### Optional Environment Variables
 
-El repo trae `app/.env.example` y `app/.env`, pero la app es `bare React Native` y no lee esas variables automáticamente a menos que se configure un loader como `react-native-dotenv`.
+The repository includes `app/.env.example` and `app/.env`, but the app is a `bare React Native` project and does not read those variables automatically unless a loader such as `react-native-dotenv` is configured.
 
-Si se quiere usar `.env` con `EXPO_PUBLIC_API_URL`, se debe:
+If you want to use `.env` with `EXPO_PUBLIC_API_URL`, you must:
 
-1. Instalar el plugin de env que se vaya a usar.
-2. Configurarlo en `babel.config.js`.
-3. Reiniciar Metro.
+1. Install the environment variable plugin you want to use.
+2. Configure it in `babel.config.js`.
+3. Restart Metro.
 
-Si no se quiere editar eso, se deja la URL por defecto en `app/src/constants/index.ts`.
+If you do not want to edit that, leave the default URL in `app/src/constants/index.ts`.
 
-## Configuración de Firebase para push notifications
+## Firebase Configuration for Push Notifications
 
-Este proyecto ya incluye soporte nativo para Firebase Messaging en Android:
+This project already includes native support for Firebase Messaging on Android:
 
-- `@react-native-firebase/app`
-- `@react-native-firebase/messaging`
-- `Notifee` para mostrar notificaciones locales
+* `@react-native-firebase/app`
+* `@react-native-firebase/messaging`
+* `Notifee` to display local notifications
 
-### Archivos necesarios
+### Required Files
 
-- `app/android/app/google-services.json`
+* `app/android/app/google-services.json`
 
-Ese archivo ya existe en este repositorio. Si clonas el proyecto en otra máquina, verifica que siga dentro de `app/android/app/`. O si no se encuentra registrarse en firebase y obtenerlo, posteriormente agregarlo a esa ruta.
+This file already exists in this repository. If you clone the project on another machine, verify that it is still inside `app/android/app/`. If it is not found, register the app in Firebase, download the file, and then add it to that path.
 
 ### Gradle
 
-Android ya está preparado para aplicar el plugin de Google Services desde:
+Android is already prepared to apply the Google Services plugin from:
 
-- `app/android/build.gradle`
-- `app/android/app/build.gradle`
+* `app/android/build.gradle`
+* `app/android/app/build.gradle`
 
-No hay necesidad de editar esto para desarrollo normal.
+There is no need to edit this for normal development.
 
-## Como instalar y ejecutar
+## How to Install and Run
 
-### 1. Ir a la carpeta de la app
+### 1. Go to the App Folder
 
 ```bash
 cd app
 ```
 
-### 2. Instalar dependencias
+### 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Levantar el backend
+### 3. Start the Backend
 
-Antes de abrir la app, asegúrese de que el backend de StreetSignal este corriendo y responda en la URL que la app va a usar.
+Before opening the app, make sure the StreetSignal backend is running and responding at the URL the app will use.
 
-Si el backend expone `http://localhost:5000/api`, entonces:
+If the backend exposes `http://localhost:5000/api`, then:
 
-- en el emulador de Android, ejecuta `adb reverse tcp:5000 tcp:5000` o cambia la IP del backend;
-- en un teléfono físico, usa la IP real de tu PC o simplemente colocar localhost si la IP de la computadora no funciona.
+* on the Android emulator, run `adb reverse tcp:5000 tcp:5000` or change the backend IP;
+* on a physical phone, use the real IP address of your PC, or simply use localhost if the computer IP does not work.
 
-### 4. Levantar Metro
+### 4. Start Metro
 
 ```bash
 npm start
 ```
 
-### 5. Ejecutar Android
+### 5. Run Android
 
-En otra terminal, desde `app/`:
+In another terminal, from `app/`:
 
 ```bash
 npm run android
 ```
 
-## Como ejecutar en iPhone / iOS
+## How to Run on iPhone / iOS
 
-Solo aplica en macOS:
+This only applies on macOS:
 
 ```bash
 cd app/ios
@@ -156,94 +166,94 @@ cd ..
 npm start
 ```
 
-En otra terminal:
+In another terminal:
 
 ```bash
 npm run ios
 ```
 
-## Credenciales de prueba
+## Test Credentials
 
-Una vez que el backend este disponible:
+Once the backend is available:
 
-| Rol | Email | Password |
-|---|---|---|
-| Ciudadano | ciudadano@test.com | 123456 |
-| Funcionario | funcionario@test.com | 123456 |
+| Role     | Email                                               | Password |
+| -------- | --------------------------------------------------- | -------- |
+| Citizen  | [ciudadano@test.com](mailto:ciudadano@test.com)     | 123456   |
+| Official | [funcionario@test.com](mailto:funcionario@test.com) | 123456   |
 
-## Como funcionan las notificaciones
+## How Notifications Work
 
-La app tiene dos capas de notificación:
+The app has two notification layers:
 
-### 1. Registro del token del dispositivo
+### 1. Device Token Registration
 
-Después de un login real, la app:
+After a real login, the app:
 
-1. pide permiso de notificaciones;
-2. obtiene el token FCM del dispositivo;
-3. registra ese token en el backend con `POST /device-tokens`.
+1. asks for notification permission;
+2. gets the device’s FCM token;
+3. registers that token in the backend using `POST /device-tokens`.
 
-Esto esta implementado en:
+This is implemented in:
 
-- `app/src/services/notificationService.ts`
-- `app/src/navigation/RootNavigator.tsx`
-- `app/src/api/notificationsService.ts`
+* `app/src/services/notificationService.ts`
+* `app/src/navigation/RootNavigator.tsx`
+* `app/src/api/notificationsService.ts`
 
-### 2. Notificaciones locales dentro de la app
+### 2. Local Notifications Inside the App
 
-Mientras el usuario esta autenticado y la app esta activa, la app consulta notificaciones no leídas cada 60 segundos.
+While the user is authenticated and the app is active, the app checks for unread notifications every 60 seconds.
 
-Si encuentra notificaciones nuevas:
+If it finds new notifications:
 
-- las guarda como conocidas por usuario;
-- muestra una notificación local con `Notifee`.
+* it saves them as known notifications for that user;
+* it shows a local notification with `Notifee`.
 
-Eso significa que:
+This means that:
 
-- aunque el push del backend tarde, el usuario puede ver alertas dentro de la app;
-- para push reales en segundo plano, el backend debe mandar FCM.
+* even if backend push notifications take longer, the user can still see alerts inside the app;
+* for real background push notifications, the backend must send FCM notifications.
 
-## Flujo recomendado para probar notificaciones
+## Recommended Flow to Test Notifications
 
-1. Levanta el backend.
-2. Levanta Metro con `npm start`.
-3. Ejecuta la app en Android.
-4. Inicia sesión con una cuenta valida.
-5. Acepta el permiso de notificaciones.
-6. Verifica que el backend reciba el token del dispositivo.
-7. Genera una notificación nueva desde el backend o desde el flujo de reportes.
-8. Deja la app abierta para ver el polling y la notificación local.
-9. Si quieres validar push real, prueba también en un teléfono físico.
+1. Start the backend.
+2. Start Metro with `npm start`.
+3. Run the app on Android.
+4. Log in with a valid account.
+5. Accept the notification permission.
+6. Verify that the backend receives the device token.
+7. Generate a new notification from the backend or through the report flow.
+8. Leave the app open to see polling and the local notification.
+9. To validate real push notifications, also test on a physical phone.
 
-## Solución de problemas
+## Troubleshooting
 
-### La app no conecta al backend
+### The App Does Not Connect to the Backend
 
-- Verifica que el backend este corriendo.
-- Revisa la URL usada por la app.
-- En Android emulator, prueba `adb reverse tcp:5000 tcp:5000`.
-- En dispositivo físico, usa la IP LAN de tu computadora. (A veces no reconoce la IP de la computadora, pero colando locallhost funciona, a veces no funciona locallhost y reconoce la IP del computador)
+* Verify that the backend is running.
+* Check the URL used by the app.
+* On the Android emulator, try `adb reverse tcp:5000 tcp:5000`.
+* On a physical device, use the LAN IP address of your computer. Sometimes the device does not recognize the computer’s IP, but localhost works; other times localhost does not work and the computer’s IP does.
 
-### No llegan notificaciones
+### Notifications Do Not Arrive
 
-- Confirma que el usuario inicio sesión.
-- Revisa que el permiso de notificaciones fue aceptado.
-- Verifica que exista `google-services.json`.
-- Confirma que el backend esta guardando el token en `/device-tokens`.
-- Confirma que el backend realmente este enviando push por FCM.
+* Confirm that the user logged in.
+* Check that the notification permission was accepted.
+* Verify that `google-services.json` exists.
+* Confirm that the backend is saving the token in `/device-tokens`.
+* Confirm that the backend is actually sending push notifications through FCM.
 
-### Veo notificaciones en la app, pero no push en segundo plano
+### I See Notifications in the App, but Not Background Push Notifications
 
-Eso normalmente significa que el polling funciona, pero el backend o Firebase aún no están enviando push reales.
+This usually means that polling is working, but the backend or Firebase is not yet sending real push notifications.
 
-### Android 13 o superior no muestra alertas
+### Android 13 or Higher Does Not Show Alerts
 
-- Verifica el permiso `POST_NOTIFICATIONS`.
-- Reinstala la app si ya habías negado el permiso y quieres volver a probar desde cero.
+* Verify the `POST_NOTIFICATIONS` permission.
+* Reinstall the app if you had already denied the permission and want to test again from scratch.
 
-## Scripts disponibles
+## Available Scripts
 
-Desde `app/`:
+From `app/`:
 
 ```bash
 npm start     # Metro bundler
@@ -254,23 +264,23 @@ npm run lint
 npm test
 ```
 
-## Estructura de Código
+## Code Structure
 
 ```text
 app/src/
-├── api/           Cliente HTTP y servicios por dominio
-├── components/    Componentes reutilizables
-├── constants/     URLs, estados y storage keys
-├── features/      Pantallas por modulo
-├── hooks/         Hooks personalizados
-├── navigation/    Navegación y auth
-├── services/      Servicios de notificación y otros flujos
-├── storage/       Persistencia local
+├── api/           HTTP client and domain services
+├── components/    Reusable components
+├── constants/     URLs, statuses, and storage keys
+├── features/      Screens by module
+├── hooks/         Custom hooks
+├── navigation/    Navigation and auth
+├── services/      Notification services and other flows
+├── storage/       Local persistence
 └── utils/         Helpers
 ```
 
-## Notas
+## Notes
 
-- La app no es Expo; es `bare React Native`.
-- El registro de token solo ocurre después de un login real.
-- Para revisar endpoints disponibles, consulta `docs/api-contracts/streetsignal-api-contracts.yml`.
+* The app is not Expo; it is `bare React Native`.
+* Token registration only happens after a real login.
+* To review the available endpoints, check `docs/api-contracts/streetsignal-api-contracts.yml`.
